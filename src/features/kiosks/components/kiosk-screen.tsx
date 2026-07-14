@@ -5,7 +5,6 @@ import { format } from "date-fns";
 import { StatusBanner } from "@/features/rooms/components/status-badge";
 import type { RoomStatusKey } from "@/lib/room-status";
 import { Button } from "@/components/ui/button";
-import { LinkButton } from "@/components/link-button";
 
 function subscribeClock(onChange: () => void) {
   const id = setInterval(onChange, 1000);
@@ -164,14 +163,7 @@ export function KioskScreen({
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-4 border-t border-neutral-800 p-6">
-        <LinkButton
-          href={`/rooms/${data.roomSlug}/book`}
-          className="h-20 text-2xl font-semibold"
-          variant="secondary"
-        >
-          Book Now
-        </LinkButton>
+      <div className="grid grid-cols-2 gap-4 border-t border-neutral-800 p-6">
         <Button
           className="h-20 text-2xl font-semibold"
           variant="secondary"

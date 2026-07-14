@@ -1,0 +1,33 @@
+export const KIOSK_DEVICE_COOKIE = "kiosk_device";
+
+/** Rolling TTL — refreshed on each /display/{token} visit. */
+export const KIOSK_DEVICE_MAX_AGE_SEC = 60 * 60 * 12;
+
+export const kioskDeviceCookieOptions = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  path: "/",
+  maxAge: KIOSK_DEVICE_MAX_AGE_SEC,
+  secure: process.env.NODE_ENV === "production",
+};
+
+/** Path segment after /display/ — reject empty or path-traversal-looking values. */
+export function parseDisplayDeviceToken(pathname: string): string | null {
+  const match = pathname.match(/^\/display\/([^/]+)$/);
+  if (!match) return null;
+  const token = match[1];
+  if (!token || token.includes("..")) return null;
+  try {
+    return decodeURIComponent(token);
+  } catch {
+    return null;
+  }
+}
+
+export function isKioskAllowedPath(pathname: string): boolean {
+  return (
+    pathname === "/display" ||
+    pathname.startsWith("/display/") ||
+    pathname.startsWith("/api/kiosk/")
+  );
+}

@@ -49,6 +49,8 @@ Magic links print to the **dev server console** when `AUTH_RESEND_KEY` is empty.
 - Admin: `/admin` (after signing in as admin)
 - Kiosk: `/display/demo-orion-kiosk`
 
+Opening a display URL sets a short-lived `kiosk_device` cookie so that browser is limited to `/display/*` and `/api/kiosk/*` (Book Now is not offered on the tablet — book via phone QR). This is **defense-in-depth**; production tablets should still use OS guided access / kiosk browser mode so users cannot clear cookies or leave the app.
+
 ## Scripts
 
 | Script | Purpose |

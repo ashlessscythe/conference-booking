@@ -31,6 +31,7 @@
 - Rotation preference UI polish and live orientation sync
 - Remote screenshot / health probes
 - Offline graceful degradation page
+- App-level `kiosk_device` cookie gate exists; ops still need guided access / kiosk browser mode on tablets
 
 ## Auth / tenancy
 - SSO (SAML/OIDC)

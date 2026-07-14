@@ -1,5 +1,12 @@
 import type { NextAuthConfig } from "next-auth";
+import { NextResponse } from "next/server";
 import { MembershipRole } from "@prisma/client";
+import {
+  KIOSK_DEVICE_COOKIE,
+  isKioskAllowedPath,
+  kioskDeviceCookieOptions,
+  parseDisplayDeviceToken,
+} from "@/lib/kiosk-device";
 
 declare module "next-auth" {
   interface Session {
@@ -23,6 +30,27 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request }) {
       const path = request.nextUrl.pathname;
+      const displayToken = parseDisplayDeviceToken(path);
+
+      // Opening a display URL stamps this browser as a kiosk device.
+      if (displayToken) {
+        const res = NextResponse.next();
+        res.cookies.set(
+          KIOSK_DEVICE_COOKIE,
+          displayToken,
+          kioskDeviceCookieOptions,
+        );
+        return res;
+      }
+
+      const lockedToken = request.cookies.get(KIOSK_DEVICE_COOKIE)?.value;
+      if (lockedToken && !isKioskAllowedPath(path)) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/display/${encodeURIComponent(lockedToken)}`;
+        url.search = "";
+        return NextResponse.redirect(url);
+      }
+
       if (path.startsWith("/admin")) {
         const role = auth?.user?.role;
         return role === "ADMIN" || role === "OWNER";
