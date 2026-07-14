@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import QRCode from "qrcode";
 import { formatDistanceToNow } from "date-fns";
 import { prisma } from "@/lib/db";
 import { requireAdmin, getOrgSettings } from "@/lib/session";
@@ -37,7 +39,6 @@ export default async function AdminDevicesPage() {
     prisma.kioskDevice.findMany({
       where: { organizationId: admin.organizationId },
       include: { room: true },
-      orderBy: { createdAt: "desc" },
     }),
     prisma.room.findMany({
       where: { organizationId: admin.organizationId },
@@ -48,17 +49,30 @@ export default async function AdminDevicesPage() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const nowMs = new Date().getTime();
 
+  const withQr = await Promise.all(
+    devices.map(async (d) => {
+      const displayUrl = `${appUrl}/display/${d.deviceToken}`;
+      const qrDataUrl = await QRCode.toDataURL(displayUrl, {
+        width: 320,
+        margin: 1,
+        errorCorrectionLevel: "M",
+      });
+      return { d, displayUrl, qrDataUrl };
+    }),
+  );
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-semibold tracking-tight">Tablet devices</h2>
         <p className="text-muted-foreground">
           Register, assign, replace, or disable kiosk tablets without changing room config.
+          Scan the QR on a tablet to open kiosk mode.
         </p>
       </div>
 
       <div className="space-y-4">
-        {devices.map((d) => {
+        {withQr.map(({ d, displayUrl, qrDataUrl }) => {
           const isOnline =
             d.enabled &&
             d.lastHeartbeat &&
@@ -76,14 +90,27 @@ export default async function AdminDevicesPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-lg border bg-white p-3 text-sm">
-                  <div className="font-medium">Display URL</div>
-                  <Link
-                    className="break-all text-blue-700 hover:underline"
-                    href={`/display/${d.deviceToken}`}
-                  >
-                    {appUrl}/display/{d.deviceToken}
-                  </Link>
+                <div className="flex flex-col items-start gap-4 rounded-lg border bg-white p-3 sm:flex-row">
+                  <Image
+                    src={qrDataUrl}
+                    alt={`Kiosk QR for ${d.name}`}
+                    width={160}
+                    height={160}
+                    unoptimized
+                    className="shrink-0 rounded-lg border bg-white p-2"
+                  />
+                  <div className="min-w-0 space-y-1 text-sm">
+                    <div className="font-medium">Kiosk QR · Display URL</div>
+                    <p className="text-muted-foreground">
+                      Point the tablet camera at this code to open kiosk mode.
+                    </p>
+                    <Link
+                      className="break-all text-blue-700 hover:underline"
+                      href={`/display/${d.deviceToken}`}
+                    >
+                      {displayUrl}
+                    </Link>
+                  </div>
                 </div>
 
                 <form
