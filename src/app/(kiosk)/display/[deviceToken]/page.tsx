@@ -5,7 +5,7 @@ import { deriveRoomStatus } from "@/lib/room-status";
 import { getOrgSettings } from "@/lib/session";
 import { getRoomDaySchedule } from "@/features/rooms/queries";
 import { KioskScreen } from "@/features/kiosks/components/kiosk-screen";
-import { addHours, endOfDay, format } from "date-fns";
+import { addHours, endOfDay } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
@@ -65,9 +65,7 @@ async function loadKiosk(deviceToken: string) {
       minutesRemaining: status.minutesRemaining,
       nextTitle: status.next?.title ?? null,
       nextStart: status.next?.startAt?.toISOString() ?? null,
-      upcomingHint: status.next
-        ? `Next at ${format(status.next.startAt, "h:mm a")}`
-        : "Available for booking",
+      upcomingHint: status.next ? "Upcoming meeting" : "Available for booking",
       qrDataUrl,
     },
   };

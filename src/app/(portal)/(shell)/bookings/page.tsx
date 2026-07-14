@@ -1,9 +1,9 @@
-import { format } from "date-fns";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { cancelBooking } from "@/features/bookings/actions";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/link-button";
+import { LocalTime } from "@/components/local-time";
 import {
   Card,
   CardContent,
@@ -41,11 +41,11 @@ export default async function MyBookingsPage() {
             <CardHeader>
               <CardTitle>No bookings yet</CardTitle>
               <CardDescription>
-                Find a free room from the dashboard and book it.
+                Find a free room from the rooms list and book it.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <LinkButton href="/">Find a room</LinkButton>
+              <LinkButton href="/rooms">Find a room</LinkButton>
             </CardContent>
           </Card>
         )}
@@ -56,8 +56,9 @@ export default async function MyBookingsPage() {
               <div>
                 <CardTitle>{b.title}</CardTitle>
                 <CardDescription>
-                  {b.room.name} · {format(b.startAt, "EEE MMM d, h:mm a")} –{" "}
-                  {format(b.endAt, "h:mm a")}
+                  {b.room.name} ·{" "}
+                  <LocalTime value={b.startAt} pattern="EEE MMM d, h:mm a" /> –{" "}
+                  <LocalTime value={b.endAt} pattern="h:mm a" />
                   {b.status === "CANCELLED" ? " · Cancelled" : ""}
                 </CardDescription>
               </div>

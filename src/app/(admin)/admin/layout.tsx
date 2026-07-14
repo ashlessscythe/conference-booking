@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 const links = [
   { href: "/admin", label: "Dashboard" },
@@ -21,7 +22,7 @@ export default async function AdminLayout({
   await requireAdmin();
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f4f7fb_0%,#eef2f7_100%)]">
+    <div className="min-h-screen bg-atmosphere">
       <div className="mx-auto flex max-w-7xl gap-8 px-4 py-6">
         <aside className="hidden w-56 shrink-0 md:block">
           <div className="sticky top-6 space-y-6">
@@ -39,13 +40,14 @@ export default async function AdminLayout({
                   key={l.href}
                   href={l.href}
                   className={cn(
-                    "rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-white hover:text-foreground",
+                    "rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-card hover:text-foreground",
                   )}
                 >
                   {l.label}
                 </Link>
               ))}
             </nav>
+            <ThemeSwitcher />
           </div>
         </aside>
         <div className="min-w-0 flex-1 space-y-6">{children}</div>
