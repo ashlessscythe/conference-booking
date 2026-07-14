@@ -34,9 +34,9 @@ export default async function RoomPage({
         <h1 className="text-3xl font-semibold">QR code expired</h1>
         <p className="text-muted-foreground">
           This printed code was regenerated. Ask facilities for the latest QR,
-          or open the room from the dashboard.
+            or open the room from the rooms list.
         </p>
-        <LinkButton href="/">Go to dashboard</LinkButton>
+        <LinkButton href="/rooms">Go to rooms</LinkButton>
       </div>
     );
   }

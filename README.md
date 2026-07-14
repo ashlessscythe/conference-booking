@@ -42,7 +42,8 @@ Magic links print to the **dev server console** when `AUTH_RESEND_KEY` is empty.
 
 ### Useful URLs
 
-- Portal: `/`
+- Landing: `/`
+- Rooms dashboard: `/rooms`
 - Room (QR): `/rooms/orion`
 - Book: `/rooms/orion/book`
 - Admin: `/admin` (after signing in as admin)

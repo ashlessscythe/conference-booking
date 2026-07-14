@@ -41,11 +41,11 @@ export default async function MyBookingsPage() {
             <CardHeader>
               <CardTitle>No bookings yet</CardTitle>
               <CardDescription>
-                Find a free room from the dashboard and book it.
+                Find a free room from the rooms list and book it.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <LinkButton href="/">Find a room</LinkButton>
+              <LinkButton href="/rooms">Find a room</LinkButton>
             </CardContent>
           </Card>
         )}
