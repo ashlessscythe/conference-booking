@@ -35,7 +35,7 @@ export function LoginForm({
         <CardTitle>{submitted ? "Check your email" : "Sign in"}</CardTitle>
         <CardDescription>
           {submitted
-            ? "If Resend is not configured, open the magic link printed in the server console."
+            ? "Click the magic link we sent to finish signing in."
             : room
               ? "Sign in to finish booking this room. We'll bring you right back."
               : "Magic link — no password required."}

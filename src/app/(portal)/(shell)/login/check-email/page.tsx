@@ -6,8 +6,7 @@ export default function CheckEmailPage() {
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
       <h1 className="text-3xl font-semibold">Check your email</h1>
       <p className="text-muted-foreground">
-        Click the magic link we sent. In local development without Resend, the
-        URL is logged in the terminal running <code>npm run dev</code>.
+        Click the magic link we sent to finish signing in.
       </p>
       <LinkButton href="/login" variant="outline">
         Back to sign in
