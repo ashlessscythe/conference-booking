@@ -115,7 +115,9 @@ export function KioskScreen({
             <p className="mt-4 text-3xl text-neutral-300">
               {data.organizer
                 ? `Organizer · ${data.organizer}`
-                : data.upcomingHint}
+                : data.nextStart && now
+                  ? `Next at ${format(new Date(data.nextStart), "h:mm a")}`
+                  : data.upcomingHint}
             </p>
           </section>
           <section className="flex flex-col justify-center px-8 py-6">

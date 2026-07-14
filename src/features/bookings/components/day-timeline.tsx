@@ -2,6 +2,7 @@
 
 import { format, differenceInMinutes, startOfDay, setHours, setMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useHydrated } from "@/lib/use-hydrated";
 
 type Block = {
   id: string;
@@ -32,6 +33,11 @@ export function DayTimeline({
   selectedStart?: Date | null;
   selectedEnd?: Date | null;
 }) {
+  // Booking positions and labels depend on the viewer's timezone (getHours /
+  // date-fns format), so they can only be computed correctly on the client.
+  // Render them after hydration to keep SSR and the first client render in sync.
+  const hydrated = useHydrated();
+
   const hours = Array.from(
     { length: DAY_END - DAY_START },
     (_, i) => DAY_START + i,
@@ -71,7 +77,8 @@ export function DayTimeline({
         tabIndex={onSlotClick ? 0 : undefined}
         aria-label="Day availability timeline"
       >
-        {bookings.map((b) => {
+        {hydrated &&
+          bookings.map((b) => {
           const left = (toOffset(b.startAt) / TOTAL_MIN) * 100;
           const width =
             (Math.max(differenceInMinutes(b.endAt, b.startAt), 15) /
