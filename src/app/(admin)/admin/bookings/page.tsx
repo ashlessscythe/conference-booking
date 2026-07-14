@@ -1,8 +1,8 @@
-import { format } from "date-fns";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { cancelBooking } from "@/features/bookings/actions";
 import { Button } from "@/components/ui/button";
+import { LocalTime } from "@/components/local-time";
 import {
   Card,
   CardContent,
@@ -45,8 +45,9 @@ export default async function AdminBookingsPage() {
               <div>
                 <CardTitle className="text-lg">{b.title}</CardTitle>
                 <CardDescription>
-                  {b.room.name} · {format(b.startAt, "MMM d, h:mm a")} –{" "}
-                  {format(b.endAt, "h:mm a")} ·{" "}
+                  {b.room.name} ·{" "}
+                  <LocalTime value={b.startAt} pattern="MMM d, h:mm a" /> –{" "}
+                  <LocalTime value={b.endAt} pattern="h:mm a" /> ·{" "}
                   {b.organizer.name ?? b.organizer.email} · {b.status}
                 </CardDescription>
               </div>

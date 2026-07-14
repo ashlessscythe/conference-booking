@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import QRCode from "qrcode";
-import { addHours, endOfDay, format } from "date-fns";
+import { addHours, endOfDay } from "date-fns";
 import { prisma } from "@/lib/db";
 import { deriveRoomStatus } from "@/lib/room-status";
 import { getOrgSettings } from "@/lib/session";
@@ -64,9 +64,7 @@ export async function GET(
     minutesRemaining: status.minutesRemaining,
     nextTitle: status.next?.title ?? null,
     nextStart: status.next?.startAt?.toISOString() ?? null,
-    upcomingHint: status.next
-      ? `Next at ${format(status.next.startAt, "h:mm a")}`
-      : "Available for booking",
+    upcomingHint: status.next ? "Upcoming meeting" : "Available for booking",
     qrDataUrl,
   });
 }

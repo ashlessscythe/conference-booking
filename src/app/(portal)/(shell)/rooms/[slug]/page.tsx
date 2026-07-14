@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
-import { format } from "date-fns";
 import { getRoomBySlug, getRoomDaySchedule } from "@/features/rooms/queries";
 import { deriveRoomStatus } from "@/lib/room-status";
 import { getOrgSettings } from "@/lib/session";
 import { StatusBadge } from "@/features/rooms/components/status-badge";
 import { DayTimeline } from "@/features/bookings/components/day-timeline";
 import { LinkButton } from "@/components/link-button";
+import { LocalTime } from "@/components/local-time";
 import {
   Card,
   CardContent,
@@ -86,11 +86,16 @@ export default async function RoomPage({
           <CardHeader>
             <CardDescription>What&apos;s next?</CardDescription>
             <CardTitle className="text-xl">
-              {status.current
-                ? `${status.current.title} (now)`
-                : status.next
-                  ? `${status.next.title} · ${format(status.next.startAt, "h:mm a")}`
-                  : "Open rest of day"}
+              {status.current ? (
+                `${status.current.title} (now)`
+              ) : status.next ? (
+                <>
+                  {status.next.title} ·{" "}
+                  <LocalTime value={status.next.startAt} pattern="h:mm a" />
+                </>
+              ) : (
+                "Open rest of day"
+              )}
             </CardTitle>
           </CardHeader>
         </Card>

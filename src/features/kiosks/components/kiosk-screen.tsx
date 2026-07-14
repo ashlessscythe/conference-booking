@@ -1,11 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { format } from "date-fns";
 import { StatusBanner } from "@/features/rooms/components/status-badge";
 import type { RoomStatusKey } from "@/lib/room-status";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/link-button";
+
+function subscribeClock(onChange: () => void) {
+  const id = setInterval(onChange, 1000);
+  return () => clearInterval(id);
+}
+
+// Returns the current unix second (stable within the same second, so the
+// snapshot is referentially cached). null on the server / during the first
+// client render so SSR and hydration match before the client clock takes over.
+function getClockSnapshot(): number | null {
+  return Math.floor(Date.now() / 1000);
+}
+
+function getClockServerSnapshot(): number | null {
+  return null;
+}
 
 type KioskPayload = {
   roomName: string;
@@ -29,14 +45,18 @@ export function KioskScreen({
   initial: KioskPayload;
 }) {
   const [data, setData] = useState(initial);
-  const [now, setNow] = useState(new Date());
+  const clockSecond = useSyncExternalStore(
+    subscribeClock,
+    getClockSnapshot,
+    getClockServerSnapshot,
+  );
+  const now = clockSecond == null ? null : new Date(clockSecond * 1000);
   const [view, setView] = useState<"main" | "schedule" | "qr">("main");
   const [schedule, setSchedule] = useState<
     { title: string; startAt: string; endAt: string }[]
   >([]);
 
   useEffect(() => {
-    const clock = setInterval(() => setNow(new Date()), 1000);
     const refresh = setInterval(async () => {
       try {
         await fetch(`/api/kiosk/${deviceToken}/heartbeat`, { method: "POST" });
@@ -52,7 +72,6 @@ export function KioskScreen({
     void fetch(`/api/kiosk/${deviceToken}/heartbeat`, { method: "POST" });
 
     return () => {
-      clearInterval(clock);
       clearInterval(refresh);
     };
   }, [deviceToken]);
@@ -72,7 +91,7 @@ export function KioskScreen({
           {data.roomName}
         </div>
         <div className="text-4xl font-semibold tabular-nums md:text-5xl">
-          {format(now, "h:mm a")}
+          {now ? format(now, "h:mm a") : "\u00a0"}
         </div>
       </div>
 
@@ -96,7 +115,9 @@ export function KioskScreen({
             <p className="mt-4 text-3xl text-neutral-300">
               {data.organizer
                 ? `Organizer · ${data.organizer}`
-                : data.upcomingHint}
+                : data.nextStart && now
+                  ? `Next at ${format(new Date(data.nextStart), "h:mm a")}`
+                  : data.upcomingHint}
             </p>
           </section>
           <section className="flex flex-col justify-center px-8 py-6">
@@ -105,7 +126,7 @@ export function KioskScreen({
             </p>
             <p className="mt-3 text-4xl font-semibold md:text-5xl">
               {data.nextTitle
-                ? `${data.nextTitle}${data.nextStart ? ` · ${format(new Date(data.nextStart), "h:mm a")}` : ""}`
+                ? `${data.nextTitle}${data.nextStart && now ? ` · ${format(new Date(data.nextStart), "h:mm a")}` : ""}`
                 : "Open rest of day"}
             </p>
           </section>

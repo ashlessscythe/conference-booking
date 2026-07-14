@@ -1,5 +1,5 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
 import {
   getDashboardSnapshot,
   getDefaultOrganizationId,
@@ -7,6 +7,7 @@ import {
 import { StatusBadge } from "@/features/rooms/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/link-button";
+import { LocalTime } from "@/components/local-time";
 import {
   Card,
   CardContent,
@@ -132,9 +133,17 @@ export default async function RoomsPage({
           title="Up next"
           value={String(snap.nextMeetings.length)}
           hint={
-            snap.nextMeetings[0]
-              ? `${format(snap.nextMeetings[0].booking.startAt, "h:mm a")} · ${snap.nextMeetings[0].room.name}`
-              : "Nothing scheduled"
+            snap.nextMeetings[0] ? (
+              <>
+                <LocalTime
+                  value={snap.nextMeetings[0].booking.startAt}
+                  pattern="h:mm a"
+                />{" "}
+                · {snap.nextMeetings[0].room.name}
+              </>
+            ) : (
+              "Nothing scheduled"
+            )
           }
         />
       </section>
@@ -173,7 +182,7 @@ export default async function RoomsPage({
                   <p>
                     <span className="font-medium">Next:</span>{" "}
                     {room.status.next.title} at{" "}
-                    {format(room.status.next.startAt, "h:mm a")}
+                    <LocalTime value={room.status.next.startAt} pattern="h:mm a" />
                   </p>
                 ) : (
                   <p className="text-muted-foreground">Open for the rest of today</p>
@@ -200,7 +209,7 @@ function SummaryCard({
 }: {
   title: string;
   value: string;
-  hint: string;
+  hint: ReactNode;
 }) {
   return (
     <Card>
