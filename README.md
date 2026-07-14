@@ -6,6 +6,12 @@ Conference room booking with three surfaces sharing one Next.js backend:
 2. **Admin** — SaaS-style dashboard for orgs, rooms, bookings, users, devices, QR, settings  
 3. **Room display (kiosk)** — fullscreen tablet UI at `/display/{deviceToken}`
 
+![Landing hero](docs/landing-hero.jpg)
+
+![Browse rooms (guest sample schedule)](docs/rooms-browse.jpg)
+
+Guests browsing `/rooms` see a preset sample office schedule (busy rooms, gaps, multiple floors). Real rooms stay behind sign-in, or via direct/QR URLs like `/rooms/orion`.
+
 ## Stack
 
 - Next.js App Router (TypeScript)
@@ -75,7 +81,7 @@ src/
   components/ui/ # shadcn primitives
   lib/           # db, auth, room-status, utils
 prisma/          # schema + seed
-docs/todo.md     # post-MVP backlog
+docs/            # screenshots, todo backlog
 ```
 
 ## MVP status

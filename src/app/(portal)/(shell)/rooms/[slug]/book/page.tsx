@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getRoomBySlug, getRoomDaySchedule } from "@/features/rooms/queries";
+import { isSampleRoomSlug } from "@/features/rooms/sample-data";
 import { BookingForm } from "@/features/bookings/components/booking-form";
 import {
   clearBookingIntent,
@@ -19,6 +20,11 @@ export default async function BookRoomPage({
 }) {
   const { slug } = await params;
   const q = await searchParams;
+
+  if (isSampleRoomSlug(slug)) {
+    redirect(`/login?callbackUrl=${encodeURIComponent("/rooms")}`);
+  }
+
   const room = await getRoomBySlug(slug);
   if (!room) notFound();
 

@@ -1,6 +1,16 @@
 import { notFound } from "next/navigation";
 import { getRoomBySlug, getRoomDaySchedule } from "@/features/rooms/queries";
-import { deriveRoomStatus } from "@/lib/room-status";
+import {
+  getSampleRoomBySlug,
+  getSampleRoomDaySchedule,
+  isSampleRoomSlug,
+  sampleStatusNow,
+} from "@/features/rooms/sample-data";
+import {
+  DEFAULT_CLEANING_BUFFER_MIN,
+  DEFAULT_STARTING_SOON_MIN,
+  deriveRoomStatus,
+} from "@/lib/room-status";
 import { getOrgSettings } from "@/lib/session";
 import { StatusBadge } from "@/features/rooms/components/status-badge";
 import { DayTimeline } from "@/features/bookings/components/day-timeline";
@@ -25,6 +35,11 @@ export default async function RoomPage({
 }) {
   const { slug } = await params;
   const q = await searchParams;
+
+  if (isSampleRoomSlug(slug)) {
+    return <SampleRoomPage slug={slug} />;
+  }
+
   const room = await getRoomBySlug(slug);
   if (!room) notFound();
 
@@ -34,7 +49,7 @@ export default async function RoomPage({
         <h1 className="text-3xl font-semibold">QR code expired</h1>
         <p className="text-muted-foreground">
           This printed code was regenerated. Ask facilities for the latest QR,
-            or open the room from the rooms list.
+          or open the room from the rooms list.
         </p>
         <LinkButton href="/rooms">Go to rooms</LinkButton>
       </div>
@@ -51,23 +66,101 @@ export default async function RoomPage({
   const schedule = await getRoomDaySchedule(room.id);
 
   return (
+    <RoomDetail
+      name={room.name}
+      capacity={room.capacity}
+      floor={room.floor}
+      description={room.description}
+      outOfService={room.outOfService}
+      status={status}
+      schedule={schedule.map((b) => ({
+        id: b.id,
+        title: b.title,
+        startAt: b.startAt,
+        endAt: b.endAt,
+        organizer: b.organizer.name ?? b.organizer.email,
+      }))}
+      bookHref={`/rooms/${room.slug}/book`}
+      bookLabel="Book room"
+    />
+  );
+}
+
+function SampleRoomPage({ slug }: { slug: string }) {
+  const room = getSampleRoomBySlug(slug);
+  if (!room) notFound();
+
+  const schedule = getSampleRoomDaySchedule(slug);
+  const status = deriveRoomStatus({
+    outOfService: room.outOfService,
+    now: sampleStatusNow(),
+    bookings: schedule,
+    cleaningBufferMin: DEFAULT_CLEANING_BUFFER_MIN,
+    startingSoonMin: DEFAULT_STARTING_SOON_MIN,
+  });
+
+  return (
+    <RoomDetail
+      name={room.name}
+      capacity={room.capacity}
+      floor={room.floor}
+      description={`${room.description} · Sample preview`}
+      outOfService={room.outOfService}
+      status={status}
+      schedule={schedule.map((b) => ({
+        id: b.id,
+        title: b.title,
+        startAt: b.startAt,
+        endAt: b.endAt,
+        organizer: b.organizer?.name ?? b.organizer?.email ?? null,
+      }))}
+      bookHref={`/login?callbackUrl=${encodeURIComponent("/rooms")}`}
+      bookLabel="Sign in to book"
+    />
+  );
+}
+
+function RoomDetail({
+  name,
+  capacity,
+  floor,
+  description,
+  outOfService,
+  status,
+  schedule,
+  bookHref,
+  bookLabel,
+}: {
+  name: string;
+  capacity: number;
+  floor: string | null;
+  description: string | null;
+  outOfService: boolean;
+  status: ReturnType<typeof deriveRoomStatus>;
+  schedule: {
+    id: string;
+    title: string;
+    startAt: Date;
+    endAt: Date;
+    organizer?: string | null;
+  }[];
+  bookHref: string;
+  bookLabel: string;
+}) {
+  return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <StatusBadge status={status.key} large />
-          <h1 className="text-4xl font-semibold tracking-tight">{room.name}</h1>
+          <h1 className="text-4xl font-semibold tracking-tight">{name}</h1>
           <p className="text-lg text-muted-foreground">
-            {room.capacity} seats
-            {room.floor ? ` · Floor ${room.floor}` : ""}
-            {room.description ? ` · ${room.description}` : ""}
+            {capacity} seats
+            {floor ? ` · Floor ${floor}` : ""}
+            {description ? ` · ${description}` : ""}
           </p>
         </div>
-        <LinkButton
-          href={`/rooms/${room.slug}/book`}
-          size="lg"
-          className="h-14 min-w-48 text-lg"
-        >
-          Book room
+        <LinkButton href={bookHref} size="lg" className="h-14 min-w-48 text-lg">
+          {bookLabel}
         </LinkButton>
       </div>
 
@@ -103,7 +196,7 @@ export default async function RoomPage({
           <CardHeader>
             <CardDescription>Can I book?</CardDescription>
             <CardTitle className="text-2xl">
-              {room.outOfService ? "Not today" : "Yes"}
+              {outOfService ? "Not today" : "Yes"}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -112,20 +205,10 @@ export default async function RoomPage({
       <Card>
         <CardHeader>
           <CardTitle>Today&apos;s schedule</CardTitle>
-          <CardDescription>
-            Visual blocks — red means booked.
-          </CardDescription>
+          <CardDescription>Visual blocks — red means booked.</CardDescription>
         </CardHeader>
         <CardContent>
-          <DayTimeline
-            bookings={schedule.map((b) => ({
-              id: b.id,
-              title: b.title,
-              startAt: b.startAt,
-              endAt: b.endAt,
-              organizer: b.organizer.name ?? b.organizer.email,
-            }))}
-          />
+          <DayTimeline bookings={schedule} />
         </CardContent>
       </Card>
     </div>

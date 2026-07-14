@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { auth } from "@/lib/auth";
 import {
   getDashboardSnapshot,
   getDefaultOrganizationId,
 } from "@/features/rooms/queries";
+import { getSampleDashboardSnapshot } from "@/features/rooms/sample-data";
 import { StatusBadge } from "@/features/rooms/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/link-button";
@@ -24,21 +26,29 @@ export default async function RoomsPage({
   searchParams: Promise<{ capacity?: string; q?: string }>;
 }) {
   const params = await searchParams;
-  const orgId = await getDefaultOrganizationId();
+  const session = await auth();
+  const signedIn = Boolean(session?.user);
 
-  if (!orgId) {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-3xl font-semibold">Conference Booking</h1>
-        <p className="text-muted-foreground">
-          No organization seeded yet. Run{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5">npm run db:seed</code>.
-        </p>
-      </div>
-    );
+  let snap = getSampleDashboardSnapshot();
+  let preview = !signedIn;
+
+  if (signedIn) {
+    const orgId = await getDefaultOrganizationId();
+    if (!orgId) {
+      return (
+        <div className="space-y-4">
+          <h1 className="text-3xl font-semibold">Conference Booking</h1>
+          <p className="text-muted-foreground">
+            No organization seeded yet. Run{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5">npm run db:seed</code>.
+          </p>
+        </div>
+      );
+    }
+    snap = await getDashboardSnapshot(orgId);
+    preview = false;
   }
 
-  const snap = await getDashboardSnapshot(orgId);
   const capacity = params.capacity ? Number(params.capacity) : null;
   const q = (params.q ?? "").toLowerCase().trim();
 
@@ -53,6 +63,8 @@ export default async function RoomsPage({
   }
 
   const firstFree = snap.freeNow[0];
+  const bookHref = (slug: string) =>
+    preview ? `/login?callbackUrl=${encodeURIComponent(`/rooms`)}` : `/rooms/${slug}/book`;
 
   return (
     <div className="space-y-10">
@@ -63,18 +75,19 @@ export default async function RoomsPage({
               Room status
             </h1>
             <p className="mt-2 max-w-xl text-lg text-muted-foreground">
-              See what&apos;s free, what&apos;s happening now, and book in a few
-              taps.
+              {preview
+                ? "Sample office schedule — sign in to see and book your real rooms."
+                : "See what's free, what's happening now, and book in a few taps."}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             {firstFree && (
               <LinkButton
-                href={`/rooms/${firstFree.slug}/book`}
+                href={bookHref(firstFree.slug)}
                 size="lg"
                 className="h-12"
               >
-                Book available room
+                {preview ? "Sign in to book" : "Book available room"}
               </LinkButton>
             )}
             <LinkButton href="/rooms?capacity=8" size="lg" variant="outline" className="h-12">
@@ -188,10 +201,10 @@ export default async function RoomsPage({
                   <p className="text-muted-foreground">Open for the rest of today</p>
                 )}
                 <LinkButton
-                  href={`/rooms/${room.slug}/book`}
+                  href={bookHref(room.slug)}
                   className="h-11 w-full sm:w-auto"
                 >
-                  Book
+                  {preview ? "Sign in to book" : "Book"}
                 </LinkButton>
               </CardContent>
             </Card>
