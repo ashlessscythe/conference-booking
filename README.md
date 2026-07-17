@@ -107,7 +107,16 @@ npm start
 
 `npm start` runs `prisma migrate deploy` before starting Next.js, so committed migrations are applied automatically on each deployment.
 
-If a reverse proxy or CDN fronts the app and Server Actions fail with an `x-forwarded-host` / `origin` mismatch, set `AUTH_URL` and `NEXT_PUBLIC_APP_URL` to the public URL, and if needed add platform hostnames to `SERVER_ACTIONS_ALLOWED_ORIGINS`. `next.config.ts` allowlists those hosts for Server Actions CSRF checks.
+If a reverse proxy or CDN fronts the app and Server Actions fail with an `x-forwarded-host` / `origin` mismatch, set runtime env:
+
+```env
+AUTH_URL=https://your-public-domain.example
+NEXT_PUBLIC_APP_URL=https://your-public-domain.example
+# Optional extra hosts (platform hostname, preview domains, etc.)
+# SERVER_ACTIONS_ALLOWED_ORIGINS=my-app.example-paas.com
+```
+
+`src/proxy.ts` aligns `x-forwarded-host` for those trusted origins at request time (no rebuild required). Prefer also configuring the proxy to forward the public `Host` / `X-Forwarded-Host` when possible.
 
 ### 2. Add Stripe
 
