@@ -35,7 +35,7 @@ const features = [
   {
     icon: CreditCard,
     title: "Free to start",
-    description: `Up to ${FREE_ROOM_LIMIT} rooms free. Upgrade to Pro when you need the whole floor — just add your Stripe keys.`,
+    description: `Up to ${FREE_ROOM_LIMIT} rooms free. Upgrade to Pro when you need the whole floor.`,
   },
 ] as const;
 

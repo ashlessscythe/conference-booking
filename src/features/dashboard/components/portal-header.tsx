@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth, signOut } from "@/lib/auth";
+import { clearKioskDeviceCookie } from "@/lib/kiosk-device";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/link-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -31,6 +32,9 @@ export async function PortalHeader() {
             <form
               action={async () => {
                 "use server";
+                // Opening /display stamps kiosk_device; after logout the admin
+                // exemption ends and proxy would trap the browser on the kiosk.
+                await clearKioskDeviceCookie();
                 await signOut({ redirectTo: "/" });
               }}
             >

@@ -15,7 +15,7 @@ export function LandingPricing({
           Simple pricing
         </h2>
         <p className="mt-3 max-w-xl text-muted-foreground">
-          Start free. Scale when your office grows — billing is Stripe-ready.
+          Start free. Scale when your office grows.
         </p>
 
         <div className="mt-12 grid gap-10 sm:grid-cols-2">
@@ -44,8 +44,8 @@ export function LandingPricing({
               Unlimited rooms
             </p>
             <p className="mt-3 text-muted-foreground">
-              Unlock more rooms when you outgrow free. Add Stripe keys to your
-              environment, then upgrade from Admin → Billing.
+              Unlock more rooms when you outgrow free. Upgrade anytime from
+              Admin → Billing.
             </p>
             {!signedIn && (
               <LinkButton
