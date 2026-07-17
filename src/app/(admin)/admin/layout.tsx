@@ -2,8 +2,9 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { isPlatformOwnerEmail } from "@/lib/billing/promo";
 
-const links = [
+const baseLinks = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/organizations", label: "Organization" },
   { href: "/admin/rooms", label: "Rooms" },
@@ -20,7 +21,14 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireAdmin();
+  const admin = await requireAdmin();
+  const links = isPlatformOwnerEmail(admin.email)
+    ? [
+        ...baseLinks.slice(0, 6),
+        { href: "/admin/promos", label: "Promo codes" },
+        ...baseLinks.slice(6),
+      ]
+    : baseLinks;
 
   return (
     <div className="min-h-screen bg-atmosphere">

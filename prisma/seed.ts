@@ -12,6 +12,8 @@ async function main() {
   await prisma.booking.deleteMany();
   await prisma.kioskDevice.deleteMany();
   await prisma.room.deleteMany();
+  await prisma.promoRedemption.deleteMany();
+  await prisma.promoCode.deleteMany();
   await prisma.invitation.deleteMany();
   await prisma.membership.deleteMany();
   await prisma.systemSettings.deleteMany();

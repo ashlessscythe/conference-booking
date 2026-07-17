@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { slugify } from "@/lib/utils";
-import { canCreateRoom, roomLimitForPlan } from "@/lib/billing/plans";
+import { canCreateRoom, resolveEffectivePlan, roomLimitForPlan } from "@/lib/billing/plans";
 import { RoomLimitError } from "@/lib/billing/errors";
 
 const roomSchema = z.object({
@@ -26,23 +26,26 @@ export async function createRoom(raw: unknown) {
     where: { id: admin.organizationId },
     select: {
       planTier: true,
+      stripeSubscriptionStatus: true,
+      promoExpiresAt: true,
       _count: { select: { rooms: true } },
     },
   });
 
+  const effective = resolveEffectivePlan(org);
   if (
     !canCreateRoom({
-      planTier: org.planTier,
+      planTier: effective,
       currentRoomCount: org._count.rooms,
     })
   ) {
-    const limit = roomLimitForPlan(org.planTier);
+    const limit = roomLimitForPlan(effective);
     throw new RoomLimitError(
-      org.planTier === "FREE"
-        ? `Free plan includes ${limit} rooms. Upgrade to Pro to add more.`
+      effective === "FREE"
+        ? `Free plan includes ${limit} rooms. Upgrade to Pro or redeem a promo to add more.`
         : `Room limit of ${limit} reached for this organization.`,
       limit,
-      org.planTier,
+      effective,
     );
   }
 

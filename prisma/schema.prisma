@@ -28,6 +28,12 @@ enum PlanTier {
   PRO
 }
 
+enum PromoKind {
+  FREE_MONTHS
+  PERCENT_OFF
+  AMOUNT_OFF
+}
+
 model User {
   id            String       @id @default(cuid())
   name          String?
@@ -39,6 +45,8 @@ model User {
   memberships   Membership[]
   bookings      Booking[]
   invitationsSent Invitation[] @relation("InvitationsSent")
+  promoCodesCreated PromoCode[] @relation("PromoCodesCreated")
+  promoRedemptions  PromoRedemption[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
@@ -87,13 +95,56 @@ model Organization {
   stripeSubscriptionStatus String?
   stripePriceId            String?
   stripeCurrentPeriodEnd   DateTime?
+  /// When set and in the future, org has promo-granted Pro access.
+  promoExpiresAt           DateTime?
+  /// Stripe promotion code id to attach on the next Checkout session.
+  pendingStripePromotionCodeId String?
   members                  Membership[]
   rooms                    Room[]
   devices                  KioskDevice[]
   invitations              Invitation[]
+  promoRedemptions         PromoRedemption[]
   settings                 SystemSettings?
   createdAt                DateTime       @default(now())
   updatedAt                DateTime       @updatedAt
+}
+
+model PromoCode {
+  id                     String       @id @default(cuid())
+  code                   String       @unique
+  kind                   PromoKind
+  active                 Boolean      @default(true)
+  freeMonths             Int?
+  percentOff             Int?
+  amountOffCents         Int?
+  durationMonths         Int?
+  maxRedemptions         Int?
+  redemptionCount        Int          @default(0)
+  expiresAt              DateTime?
+  note                   String?
+  stripeCouponId         String?
+  stripePromotionCodeId  String?      @unique
+  createdByUserId        String
+  createdBy              User         @relation("PromoCodesCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  redemptions            PromoRedemption[]
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  @@index([active])
+}
+
+model PromoRedemption {
+  id             String       @id @default(cuid())
+  promoCodeId    String
+  organizationId String
+  redeemedById   String
+  redeemedAt     DateTime     @default(now())
+  promoCode      PromoCode    @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  redeemedBy     User         @relation(fields: [redeemedById], references: [id], onDelete: Cascade)
+
+  @@unique([promoCodeId, organizationId])
+  @@index([organizationId])
 }
 
 model Invitation {

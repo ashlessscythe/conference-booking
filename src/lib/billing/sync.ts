@@ -1,9 +1,10 @@
 import type Stripe from "stripe";
 import { prisma } from "@/lib/db";
+import { getStripe } from "@/lib/billing/stripe";
 import {
-  getStripe,
   isActiveSubscriptionStatus,
-} from "@/lib/billing/stripe";
+  planAfterSubscriptionRemoved,
+} from "@/lib/billing/plans";
 
 export async function syncOrganizationFromSubscription(
   organizationId: string,
@@ -20,12 +21,20 @@ export async function syncOrganizationFromSubscription(
       ? new Date(periodEndUnix * 1000)
       : null;
 
-  const pro = isActiveSubscriptionStatus(subscription.status);
+  const org = await prisma.organization.findUniqueOrThrow({
+    where: { id: organizationId },
+    select: { promoExpiresAt: true },
+  });
+
+  const stripePro = isActiveSubscriptionStatus(subscription.status);
+  const planTier = stripePro
+    ? "PRO"
+    : planAfterSubscriptionRemoved(org);
 
   await prisma.organization.update({
     where: { id: organizationId },
     data: {
-      planTier: pro ? "PRO" : "FREE",
+      planTier,
       stripeSubscriptionId: subscription.id,
       stripeSubscriptionStatus: subscription.status,
       stripePriceId: priceId,
@@ -34,6 +43,10 @@ export async function syncOrganizationFromSubscription(
         typeof subscription.customer === "string"
           ? subscription.customer
           : subscription.customer.id,
+      // Clear pending checkout promo once a subscription exists
+      pendingStripePromotionCodeId: stripePro
+        ? null
+        : undefined,
     },
   });
 }
@@ -112,10 +125,14 @@ export async function handleStripeWebhookEvent(event: Stripe.Event) {
       if (!orgId) break;
 
       if (event.type === "customer.subscription.deleted") {
+        const org = await prisma.organization.findUniqueOrThrow({
+          where: { id: orgId },
+          select: { promoExpiresAt: true },
+        });
         await prisma.organization.update({
           where: { id: orgId },
           data: {
-            planTier: "FREE",
+            planTier: planAfterSubscriptionRemoved(org),
             stripeSubscriptionStatus: "canceled",
             stripeSubscriptionId: null,
             stripePriceId: null,

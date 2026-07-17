@@ -54,7 +54,9 @@ Magic links print to the **dev server console** when `AUTH_RESEND_KEY` is empty.
 - Orgs are isolated: rooms, bookings, devices, and members stay inside one workspace
 - Admins invite teammates from **Admin → Users** (invite email / console link)
 
-See [`docs/saas-plan.md`](docs/saas-plan.md).
+- Set `PLATFORM_OWNER_EMAILS` to your operator email(s)
+- Create codes at **Admin → Promo codes**; orgs redeem on **Admin → Billing**
+- Free-month codes grant Pro without Stripe; discount codes sync to Stripe Checkout
 
 ### Useful URLs
 
@@ -75,6 +77,7 @@ Opening a display URL sets a short-lived `kiosk_device` cookie so that browser i
 | `npm run dev` | Dev server |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run test` | Vitest unit tests (billing/promo money paths) |
 | `npm run build` | Production build |
 | `npm run db:migrate` | Prisma migrate |
 | `npm run db:seed` | Seed demo data |

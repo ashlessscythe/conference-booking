@@ -71,7 +71,13 @@ export async function startProCheckout() {
     subscription_data: {
       metadata: { organizationId: org.id },
     },
-    allow_promotion_codes: true,
+    ...(org.pendingStripePromotionCodeId
+      ? {
+          discounts: [
+            { promotion_code: org.pendingStripePromotionCodeId },
+          ],
+        }
+      : { allow_promotion_codes: true }),
   });
 
   if (!session.url) {

@@ -20,6 +20,7 @@ import {
   FREE_ROOM_LIMIT,
   canCreateRoom,
   planLabel,
+  resolveEffectivePlan,
   roomLimitForPlan,
 } from "@/lib/billing/plans";
 
@@ -51,13 +52,19 @@ export default async function AdminRoomsPage() {
     }),
     prisma.organization.findUniqueOrThrow({
       where: { id: admin.organizationId },
-      select: { planTier: true, name: true },
+      select: {
+        planTier: true,
+        name: true,
+        stripeSubscriptionStatus: true,
+        promoExpiresAt: true,
+      },
     }),
   ]);
 
-  const limit = roomLimitForPlan(org.planTier);
+  const effective = resolveEffectivePlan(org);
+  const limit = roomLimitForPlan(effective);
   const atLimit = !canCreateRoom({
-    planTier: org.planTier,
+    planTier: effective,
     currentRoomCount: rooms.length,
   });
 
@@ -68,12 +75,12 @@ export default async function AdminRoomsPage() {
         <p className="text-muted-foreground">
           Capacity, floors, and out-of-service toggles.{" "}
           <span className="font-medium text-foreground">
-            {planLabel(org.planTier)} plan · {rooms.length}/{limit} rooms
+            {planLabel(effective)} plan · {rooms.length}/{limit} rooms
           </span>
         </p>
       </div>
 
-      {org.planTier === "FREE" && (
+      {effective === "FREE" && (
         <p className="rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
           Free workspaces include {FREE_ROOM_LIMIT} rooms. You&apos;re using{" "}
           {rooms.length} of {FREE_ROOM_LIMIT}.
@@ -128,22 +135,22 @@ export default async function AdminRoomsPage() {
           <CardTitle>Add room</CardTitle>
           <CardDescription>
             {atLimit
-              ? org.planTier === "FREE"
+              ? effective === "FREE"
                 ? `You've reached the free limit of ${FREE_ROOM_LIMIT} rooms.`
                 : `Room limit of ${limit} reached.`
               : `Create a room for ${org.name}.`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {atLimit ? (
+            {atLimit ? (
             <p className="text-sm text-muted-foreground">
-              {org.planTier === "FREE" ? (
+              {effective === "FREE" ? (
                 <>
                   <a
                     href="/admin/billing"
                     className="underline underline-offset-4"
                   >
-                    Upgrade to Pro
+                    Upgrade or redeem a promo
                   </a>{" "}
                   to unlock more rooms, or remove a room to stay within the free
                   limit.

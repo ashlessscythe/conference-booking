@@ -30,7 +30,17 @@ Sell Conference Booking as multi-tenant SaaS. Organizations own rooms, members, 
 1. Create a Stripe Product with a recurring Price
 2. Set `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` in the host env
 3. Point Stripe webhook to `/api/stripe/webhook`
-4. Owners upgrade from **Admin → Billing**
+4. Set `PLATFORM_OWNER_EMAILS` to your email(s) to manage promo codes
+5. Owners upgrade from **Admin → Billing**; platform owners create codes at **Admin → Promo codes**
+
+### Promo codes
+
+| Kind | Effect |
+|------|--------|
+| `FREE_MONTHS` | Grants Pro until `now + N months` (works without Stripe) |
+| `PERCENT_OFF` / `AMOUNT_OFF` | Syncs to Stripe Promotion Code; applied on Checkout |
+
+Orgs redeem codes on **Admin → Billing**. Redemptions are one-per-org and respect max uses / expiry.
 
 ## Tenancy model
 

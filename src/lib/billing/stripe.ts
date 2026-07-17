@@ -1,5 +1,11 @@
 import Stripe from "stripe";
 
+import {
+  isActiveSubscriptionStatus,
+} from "@/lib/billing/plans";
+
+export { isActiveSubscriptionStatus };
+
 let stripeSingleton: Stripe | null = null;
 
 export function isStripeConfigured() {
@@ -46,8 +52,4 @@ export function proPriceId() {
     throw new Error("STRIPE_PRICE_ID is not set.");
   }
   return id;
-}
-
-export function isActiveSubscriptionStatus(status: string | null | undefined) {
-  return status === "active" || status === "trialing";
 }

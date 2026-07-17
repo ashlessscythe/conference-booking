@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { MembershipRole } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { isPlatformOwnerEmail } from "@/lib/billing/promo";
 
 export async function requireUser() {
   const session = await auth();
@@ -25,6 +26,14 @@ export async function requireAdmin() {
     organizationId: user.organizationId,
     role: role as MembershipRole,
   };
+}
+
+export async function requirePlatformOwner() {
+  const user = await requireUser();
+  if (!isPlatformOwnerEmail(user.email)) {
+    redirect("/admin");
+  }
+  return user;
 }
 
 /** Active org from the session, or null if the user has not joined one yet. */
