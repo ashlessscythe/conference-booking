@@ -98,10 +98,10 @@ export default async function RoomsPage({
                 {(session?.user?.role === "ADMIN" ||
                   session?.user?.role === "OWNER") && (
                   <Link
-                    href="/admin/rooms"
+                    href="/admin/billing"
                     className="underline underline-offset-4"
                   >
-                    Manage rooms
+                    Upgrade
                   </Link>
                 )}
               </p>

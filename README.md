@@ -49,7 +49,8 @@ Magic links print to the **dev server console** when `AUTH_RESEND_KEY` is empty.
 ### SaaS plans
 
 - **Free** — up to 2 rooms per organization (default on signup at `/signup`)
-- **Pro** — higher room limit; Stripe checkout lands in a follow-up PR
+- **Pro** — higher room limit via Stripe Checkout (`Admin → Billing`)
+- Set `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, and `STRIPE_WEBHOOK_SECRET` to monetize
 - Orgs are isolated: rooms, bookings, devices, and members stay inside one workspace
 - Admins invite teammates from **Admin → Users** (invite email / console link)
 

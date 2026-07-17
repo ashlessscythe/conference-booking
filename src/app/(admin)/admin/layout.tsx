@@ -9,6 +9,7 @@ const links = [
   { href: "/admin/rooms", label: "Rooms" },
   { href: "/admin/bookings", label: "Bookings" },
   { href: "/admin/users", label: "Users" },
+  { href: "/admin/billing", label: "Billing" },
   { href: "/admin/devices", label: "Tablet Devices" },
   { href: "/admin/qr", label: "QR Codes" },
   { href: "/admin/settings", label: "System Settings" },

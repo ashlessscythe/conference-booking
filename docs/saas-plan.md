@@ -22,8 +22,15 @@ Sell Conference Booking as multi-tenant SaaS. Organizations own rooms, members, 
 ### PR 2 — Stripe billing
 - Env-only keys: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, optional publishable key
 - Checkout + Customer Portal + webhook → flip org to Pro
-- Admin Billing page; room create gates on plan
+- Admin **Billing** page; room create gates on plan
 - Works when Stripe env is empty (dev stays Free)
+
+## Monetize checklist
+
+1. Create a Stripe Product with a recurring Price
+2. Set `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` in the host env
+3. Point Stripe webhook to `/api/stripe/webhook`
+4. Owners upgrade from **Admin → Billing**
 
 ## Tenancy model
 

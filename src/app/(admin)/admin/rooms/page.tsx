@@ -78,8 +78,12 @@ export default async function AdminRoomsPage() {
           Free workspaces include {FREE_ROOM_LIMIT} rooms. You&apos;re using{" "}
           {rooms.length} of {FREE_ROOM_LIMIT}.
           {atLimit
-            ? " Upgrade to Pro (Admin → Billing) to add more."
-            : " Add rooms below, or upgrade when you need more."}
+            ? " "
+            : " Add rooms below, or "}
+          <a href="/admin/billing" className="underline underline-offset-4">
+            {atLimit ? "Upgrade to Pro" : "upgrade anytime"}
+          </a>
+          {atLimit ? " to add more." : " from Billing."}
         </p>
       )}
 
@@ -133,9 +137,20 @@ export default async function AdminRoomsPage() {
         <CardContent>
           {atLimit ? (
             <p className="text-sm text-muted-foreground">
-              {org.planTier === "FREE"
-                ? "Connect Stripe billing (follow-up) to upgrade to Pro, or remove a room to stay within the free limit."
-                : "Remove a room before adding another."}
+              {org.planTier === "FREE" ? (
+                <>
+                  <a
+                    href="/admin/billing"
+                    className="underline underline-offset-4"
+                  >
+                    Upgrade to Pro
+                  </a>{" "}
+                  to unlock more rooms, or remove a room to stay within the free
+                  limit.
+                </>
+              ) : (
+                "Remove a room before adding another."
+              )}
             </p>
           ) : (
             <form action={createRoomAction} className="grid gap-3 sm:grid-cols-2">

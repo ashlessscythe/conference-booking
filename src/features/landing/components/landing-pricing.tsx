@@ -44,8 +44,8 @@ export function LandingPricing({
               Unlimited rooms
             </p>
             <p className="mt-3 text-muted-foreground">
-              Unlock more rooms when you outgrow free. Connect Stripe in your
-              environment and upgrade from Admin → Billing.
+              Unlock more rooms when you outgrow free. Add Stripe keys to your
+              environment, then upgrade from Admin → Billing.
             </p>
             {!signedIn && (
               <LinkButton
