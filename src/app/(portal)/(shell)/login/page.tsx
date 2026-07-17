@@ -38,6 +38,12 @@ export default async function LoginPage({
           end={q.end}
           title={q.title}
         />
+        <p className="mx-auto max-w-md text-center text-sm text-muted-foreground">
+          New here?{" "}
+          <a href="/signup" className="underline underline-offset-4">
+            Start free with 2 rooms
+          </a>
+        </p>
       </div>
     </div>
   );

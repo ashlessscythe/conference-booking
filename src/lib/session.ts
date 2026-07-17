@@ -18,13 +18,31 @@ export async function requireAdmin() {
     redirect("/");
   }
   if (!user.organizationId) {
-    redirect("/");
+    redirect("/onboarding");
   }
   return {
     ...user,
     organizationId: user.organizationId,
     role: role as MembershipRole,
   };
+}
+
+/** Active org from the session, or null if the user has not joined one yet. */
+export async function getSessionOrganizationId() {
+  const session = await auth();
+  return session?.user?.organizationId ?? null;
+}
+
+export async function requireOrganizationId() {
+  const orgId = await getSessionOrganizationId();
+  if (!orgId) {
+    const session = await auth();
+    if (!session?.user?.id) {
+      redirect("/login");
+    }
+    redirect("/onboarding");
+  }
+  return orgId;
 }
 
 export async function getOrgSettings(organizationId: string) {

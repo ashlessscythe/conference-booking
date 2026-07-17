@@ -55,7 +55,11 @@ export const authConfig = {
         const role = auth?.user?.role;
         return role === "ADMIN" || role === "OWNER";
       }
-      if (path.startsWith("/bookings") || path.startsWith("/book")) {
+      if (
+        path.startsWith("/bookings") ||
+        path.startsWith("/book") ||
+        path.startsWith("/onboarding")
+      ) {
         return !!auth?.user;
       }
       return true;

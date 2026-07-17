@@ -1,8 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
-import { createOrganization } from "@/features/organizations/actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { planLabel, roomLimitForPlan } from "@/lib/billing/plans";
 import {
   Card,
   CardContent,
@@ -15,54 +13,68 @@ export const dynamic = "force-dynamic";
 
 export default async function OrganizationsPage() {
   const admin = await requireAdmin();
-  const orgs = await prisma.organization.findMany({
-    include: { _count: { select: { rooms: true, members: true } } },
-    orderBy: { name: "asc" },
+  const memberships = await prisma.membership.findMany({
+    where: { userId: admin.id },
+    include: {
+      organization: {
+        include: { _count: { select: { rooms: true, members: true } } },
+      },
+    },
+    orderBy: { createdAt: "asc" },
   });
+
+  const active = memberships.find(
+    (m) => m.organizationId === admin.organizationId,
+  );
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-semibold tracking-tight">Organizations</h2>
+        <h2 className="text-3xl font-semibold tracking-tight">Organization</h2>
         <p className="text-muted-foreground">
-          Active org for your session:{" "}
-          <code className="rounded bg-muted px-1.5">{admin.organizationId}</code>
+          Your workspace and any other orgs you belong to. Data is isolated per
+          organization.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {orgs.map((o) => (
-          <Card key={o.id}>
-            <CardHeader>
-              <CardTitle>{o.name}</CardTitle>
-              <CardDescription>
-                /{o.slug} · {o._count.rooms} rooms · {o._count.members} people
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
+      {active && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{active.organization.name}</CardTitle>
+            <CardDescription>
+              Active · {planLabel(active.organization.planTier)} · /
+              {active.organization.slug}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            {active.organization._count.rooms} /{" "}
+            {roomLimitForPlan(active.organization.planTier)} rooms ·{" "}
+            {active.organization._count.members} people · your role:{" "}
+            {active.role}
+          </CardContent>
+        </Card>
+      )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Create organization</CardTitle>
-          <CardDescription>You become the owner.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            action={async (formData) => {
-              "use server";
-              await createOrganization({ name: formData.get("name") });
-            }}
-            className="flex flex-col gap-3 sm:flex-row"
-          >
-            <Input name="name" placeholder="Organization name" required className="h-11" />
-            <Button type="submit" className="h-11">
-              Create
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      {memberships.length > 1 && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Other memberships</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            {memberships
+              .filter((m) => m.organizationId !== admin.organizationId)
+              .map((m) => (
+                <Card key={m.id}>
+                  <CardHeader>
+                    <CardTitle>{m.organization.name}</CardTitle>
+                    <CardDescription>
+                      {planLabel(m.organization.planTier)} · {m.role} ·{" "}
+                      {m.organization._count.rooms} rooms
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

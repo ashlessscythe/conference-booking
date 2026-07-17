@@ -48,6 +48,18 @@ export async function createBooking(raw: unknown) {
     throw new Error("Room is out of service.");
   }
 
+  const membership = await prisma.membership.findUnique({
+    where: {
+      userId_organizationId: {
+        userId: user.id,
+        organizationId: room.organizationId,
+      },
+    },
+  });
+  if (!membership) {
+    throw new Error("You must join this organization before booking.");
+  }
+
   const settings = await getOrgSettings(room.organizationId);
   await assertNoOverlap({
     roomId: room.id,

@@ -12,6 +12,7 @@ async function main() {
   await prisma.booking.deleteMany();
   await prisma.kioskDevice.deleteMany();
   await prisma.room.deleteMany();
+  await prisma.invitation.deleteMany();
   await prisma.membership.deleteMany();
   await prisma.systemSettings.deleteMany();
   await prisma.session.deleteMany();
@@ -40,6 +41,8 @@ async function main() {
     data: {
       name: "Aptiv HQ",
       slug: "aptiv-hq",
+      // Demo seed has 3 rooms — mark Pro so free-limit checks do not block demos
+      planTier: "PRO",
       settings: {
         create: {
           cleaningBufferMin: 10,

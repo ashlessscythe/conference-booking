@@ -2,6 +2,8 @@
 
 import { signIn } from "@/lib/auth";
 import { setBookingIntent } from "@/lib/booking-intent";
+import { setSignupIntent } from "@/lib/signup-intent";
+import { z } from "zod";
 
 export async function requestMagicLink(formData: FormData) {
   const email = String(formData.get("email") ?? "");
@@ -24,5 +26,24 @@ export async function requestMagicLink(formData: FormData) {
   await signIn("resend", {
     email,
     redirectTo: callbackUrl,
+  });
+}
+
+const signupSchema = z.object({
+  email: z.string().email(),
+  organizationName: z.string().min(1).max(80),
+});
+
+export async function requestSignupMagicLink(formData: FormData) {
+  const data = signupSchema.parse({
+    email: formData.get("email"),
+    organizationName: formData.get("organizationName"),
+  });
+
+  await setSignupIntent({ organizationName: data.organizationName.trim() });
+
+  await signIn("resend", {
+    email: data.email,
+    redirectTo: "/onboarding",
   });
 }

@@ -4,6 +4,7 @@ import {
   createRoom,
   toggleRoomOutOfService,
 } from "@/features/rooms/actions";
+import { isRoomLimitError } from "@/lib/billing/errors";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/link-button";
 import { Input } from "@/components/ui/input";
@@ -15,24 +16,49 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  FREE_ROOM_LIMIT,
+  canCreateRoom,
+  planLabel,
+  roomLimitForPlan,
+} from "@/lib/billing/plans";
 
 export const dynamic = "force-dynamic";
 
 async function createRoomAction(formData: FormData) {
   "use server";
-  await createRoom({
-    name: formData.get("name"),
-    capacity: formData.get("capacity"),
-    floor: formData.get("floor") || null,
-    description: formData.get("description") || null,
-  });
+  try {
+    await createRoom({
+      name: formData.get("name"),
+      capacity: formData.get("capacity"),
+      floor: formData.get("floor") || null,
+      description: formData.get("description") || null,
+    });
+  } catch (e) {
+    if (isRoomLimitError(e)) {
+      return;
+    }
+    throw e;
+  }
 }
 
 export default async function AdminRoomsPage() {
   const admin = await requireAdmin();
-  const rooms = await prisma.room.findMany({
-    where: { organizationId: admin.organizationId },
-    orderBy: { name: "asc" },
+  const [rooms, org] = await Promise.all([
+    prisma.room.findMany({
+      where: { organizationId: admin.organizationId },
+      orderBy: { name: "asc" },
+    }),
+    prisma.organization.findUniqueOrThrow({
+      where: { id: admin.organizationId },
+      select: { planTier: true, name: true },
+    }),
+  ]);
+
+  const limit = roomLimitForPlan(org.planTier);
+  const atLimit = !canCreateRoom({
+    planTier: org.planTier,
+    currentRoomCount: rooms.length,
   });
 
   return (
@@ -40,9 +66,22 @@ export default async function AdminRoomsPage() {
       <div>
         <h2 className="text-3xl font-semibold tracking-tight">Rooms</h2>
         <p className="text-muted-foreground">
-          Capacity, floors, and out-of-service toggles.
+          Capacity, floors, and out-of-service toggles.{" "}
+          <span className="font-medium text-foreground">
+            {planLabel(org.planTier)} plan · {rooms.length}/{limit} rooms
+          </span>
         </p>
       </div>
+
+      {org.planTier === "FREE" && (
+        <p className="rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
+          Free workspaces include {FREE_ROOM_LIMIT} rooms. You&apos;re using{" "}
+          {rooms.length} of {FREE_ROOM_LIMIT}.
+          {atLimit
+            ? " Upgrade to Pro (Admin → Billing) to add more."
+            : " Add rooms below, or upgrade when you need more."}
+        </p>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         {rooms.map((room) => (
@@ -83,29 +122,44 @@ export default async function AdminRoomsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Add room</CardTitle>
+          <CardDescription>
+            {atLimit
+              ? org.planTier === "FREE"
+                ? `You've reached the free limit of ${FREE_ROOM_LIMIT} rooms.`
+                : `Room limit of ${limit} reached.`
+              : `Create a room for ${org.name}.`}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={createRoomAction} className="grid gap-3 sm:grid-cols-2">
-            <Input name="name" placeholder="Name" required className="h-11" />
-            <Input
-              name="capacity"
-              type="number"
-              min={1}
-              defaultValue={6}
-              placeholder="Capacity"
-              required
-              className="h-11"
-            />
-            <Input name="floor" placeholder="Floor" className="h-11" />
-            <Textarea
-              name="description"
-              placeholder="Description"
-              className="sm:col-span-2"
-            />
-            <Button type="submit" className="h-11 sm:col-span-2 sm:w-40">
-              Create room
-            </Button>
-          </form>
+          {atLimit ? (
+            <p className="text-sm text-muted-foreground">
+              {org.planTier === "FREE"
+                ? "Connect Stripe billing (follow-up) to upgrade to Pro, or remove a room to stay within the free limit."
+                : "Remove a room before adding another."}
+            </p>
+          ) : (
+            <form action={createRoomAction} className="grid gap-3 sm:grid-cols-2">
+              <Input name="name" placeholder="Name" required className="h-11" />
+              <Input
+                name="capacity"
+                type="number"
+                min={1}
+                defaultValue={6}
+                placeholder="Capacity"
+                required
+                className="h-11"
+              />
+              <Input name="floor" placeholder="Floor" className="h-11" />
+              <Textarea
+                name="description"
+                placeholder="Description"
+                className="sm:col-span-2"
+              />
+              <Button type="submit" className="h-11 sm:col-span-2 sm:w-40">
+                Create room
+              </Button>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>

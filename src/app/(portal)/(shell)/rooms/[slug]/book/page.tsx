@@ -62,6 +62,12 @@ export default async function BookRoomPage({
         <p className="mt-1 text-muted-foreground">
           Pick a free slot on the timeline. No long forms.
         </p>
+        {room.organization.planTier === "FREE" && (
+          <p className="mt-3 text-sm text-amber-800 dark:text-amber-200">
+            This workspace is on the free plan (up to 2 rooms). Admins can
+            upgrade to Pro when they need more rooms.
+          </p>
+        )}
       </div>
       <BookingForm
         roomId={room.id}

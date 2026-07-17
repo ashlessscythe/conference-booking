@@ -5,6 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { slugify } from "@/lib/utils";
+import { canCreateRoom, roomLimitForPlan } from "@/lib/billing/plans";
+import { RoomLimitError } from "@/lib/billing/errors";
 
 const roomSchema = z.object({
   name: z.string().min(1).max(80),
@@ -20,6 +22,30 @@ export async function createRoom(raw: unknown) {
   const data = roomSchema.parse(raw);
   const slug = slugify(data.slug || data.name);
 
+  const org = await prisma.organization.findUniqueOrThrow({
+    where: { id: admin.organizationId },
+    select: {
+      planTier: true,
+      _count: { select: { rooms: true } },
+    },
+  });
+
+  if (
+    !canCreateRoom({
+      planTier: org.planTier,
+      currentRoomCount: org._count.rooms,
+    })
+  ) {
+    const limit = roomLimitForPlan(org.planTier);
+    throw new RoomLimitError(
+      org.planTier === "FREE"
+        ? `Free plan includes ${limit} rooms. Upgrade to Pro to add more.`
+        : `Room limit of ${limit} reached for this organization.`,
+      limit,
+      org.planTier,
+    );
+  }
+
   const room = await prisma.room.create({
     data: {
       organizationId: admin.organizationId,
@@ -34,6 +60,7 @@ export async function createRoom(raw: unknown) {
 
   revalidatePath("/admin/rooms");
   revalidatePath("/");
+  revalidatePath("/rooms");
   return room;
 }
 

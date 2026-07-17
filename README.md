@@ -46,9 +46,19 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Magic links print to the **dev server console** when `AUTH_RESEND_KEY` is empty.
 
+### SaaS plans
+
+- **Free** — up to 2 rooms per organization (default on signup at `/signup`)
+- **Pro** — higher room limit; Stripe checkout lands in a follow-up PR
+- Orgs are isolated: rooms, bookings, devices, and members stay inside one workspace
+- Admins invite teammates from **Admin → Users** (invite email / console link)
+
+See [`docs/saas-plan.md`](docs/saas-plan.md).
+
 ### Useful URLs
 
 - Landing: `/`
+- Sign up: `/signup`
 - Rooms dashboard: `/rooms`
 - Room (QR): `/rooms/orion`
 - Book: `/rooms/orion/book`

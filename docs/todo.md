@@ -35,8 +35,8 @@
 
 ## Auth / tenancy
 - SSO (SAML/OIDC)
-- Invites with pending membership state
 - Cross-org switching UX for multi-membership users
+- Stripe Customer Portal polish / invoices UI
 
 ## Accessibility & QA
 - Formal WCAG AA audit

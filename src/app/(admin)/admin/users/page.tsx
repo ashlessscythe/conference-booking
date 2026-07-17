@@ -24,18 +24,29 @@ async function addMemberAction(formData: FormData) {
 
 export default async function AdminUsersPage() {
   const admin = await requireAdmin();
-  const members = await prisma.membership.findMany({
-    where: { organizationId: admin.organizationId },
-    include: { user: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const [members, invitations] = await Promise.all([
+    prisma.membership.findMany({
+      where: { organizationId: admin.organizationId },
+      include: { user: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.invitation.findMany({
+      where: {
+        organizationId: admin.organizationId,
+        acceptedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-semibold tracking-tight">Users</h2>
         <p className="text-muted-foreground">
-          Memberships for this organization. They sign in via magic link.
+          Invite people to your organization. They sign in via magic link and
+          accept the invite.
         </p>
       </div>
 
@@ -54,17 +65,40 @@ export default async function AdminUsersPage() {
         ))}
       </div>
 
+      {invitations.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Pending invites</h3>
+          <div className="grid gap-3 md:grid-cols-2">
+            {invitations.map((inv) => (
+              <Card key={inv.id}>
+                <CardHeader>
+                  <CardTitle className="text-lg">{inv.email}</CardTitle>
+                  <CardDescription>
+                    {inv.role} · expires{" "}
+                    {inv.expiresAt.toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle>Add member</CardTitle>
+          <CardTitle>Invite member</CardTitle>
           <CardDescription>
-            Creates the user if needed and attaches a membership.
+            Sends an email with an accept link (printed to the server console in
+            local dev when Resend is unset).
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={addMemberAction} className="grid gap-3 sm:grid-cols-2">
             <Input name="email" type="email" placeholder="Email" required className="h-11" />
-            <Input name="name" placeholder="Name" className="h-11" />
+            <Input name="name" placeholder="Name (optional)" className="h-11" />
             <select
               name="role"
               className="h-11 rounded-lg border bg-background px-3"
@@ -72,10 +106,10 @@ export default async function AdminUsersPage() {
             >
               <option value="MEMBER">Member</option>
               <option value="ADMIN">Admin</option>
-              <option value="OWNER">Owner</option>
+              {admin.role === "OWNER" && <option value="OWNER">Owner</option>}
             </select>
             <Button type="submit" className="h-11">
-              Add
+              Send invite
             </Button>
           </form>
         </CardContent>
