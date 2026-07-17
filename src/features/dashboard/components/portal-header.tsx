@@ -39,7 +39,12 @@ export async function PortalHeader() {
               </Button>
             </form>
           ) : (
-            <LinkButton href="/login">Sign in</LinkButton>
+            <>
+              <LinkButton href="/signup" variant="outline">
+                Start free
+              </LinkButton>
+              <LinkButton href="/login">Sign in</LinkButton>
+            </>
           )}
         </nav>
       </div>

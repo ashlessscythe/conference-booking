@@ -23,6 +23,17 @@ enum DeviceRotation {
   PORTRAIT
 }
 
+enum PlanTier {
+  FREE
+  PRO
+}
+
+enum PromoKind {
+  FREE_MONTHS
+  PERCENT_OFF
+  AMOUNT_OFF
+}
+
 model User {
   id            String       @id @default(cuid())
   name          String?
@@ -33,6 +44,9 @@ model User {
   sessions      Session[]
   memberships   Membership[]
   bookings      Booking[]
+  invitationsSent Invitation[] @relation("InvitationsSent")
+  promoCodesCreated PromoCode[] @relation("PromoCodesCreated")
+  promoRedemptions  PromoRedemption[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
@@ -72,15 +86,82 @@ model VerificationToken {
 }
 
 model Organization {
-  id        String         @id @default(cuid())
-  name      String
-  slug      String         @unique
-  members   Membership[]
-  rooms     Room[]
-  devices   KioskDevice[]
-  settings  SystemSettings?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id                       String         @id @default(cuid())
+  name                     String
+  slug                     String         @unique
+  planTier                 PlanTier       @default(FREE)
+  stripeCustomerId         String?        @unique
+  stripeSubscriptionId     String?        @unique
+  stripeSubscriptionStatus String?
+  stripePriceId            String?
+  stripeCurrentPeriodEnd   DateTime?
+  /// When set and in the future, org has promo-granted Pro access.
+  promoExpiresAt           DateTime?
+  /// Stripe promotion code id to attach on the next Checkout session.
+  pendingStripePromotionCodeId String?
+  members                  Membership[]
+  rooms                    Room[]
+  devices                  KioskDevice[]
+  invitations              Invitation[]
+  promoRedemptions         PromoRedemption[]
+  settings                 SystemSettings?
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+}
+
+model PromoCode {
+  id                     String       @id @default(cuid())
+  code                   String       @unique
+  kind                   PromoKind
+  active                 Boolean      @default(true)
+  freeMonths             Int?
+  percentOff             Int?
+  amountOffCents         Int?
+  durationMonths         Int?
+  maxRedemptions         Int?
+  redemptionCount        Int          @default(0)
+  expiresAt              DateTime?
+  note                   String?
+  stripeCouponId         String?
+  stripePromotionCodeId  String?      @unique
+  createdByUserId        String
+  createdBy              User         @relation("PromoCodesCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  redemptions            PromoRedemption[]
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  @@index([active])
+}
+
+model PromoRedemption {
+  id             String       @id @default(cuid())
+  promoCodeId    String
+  organizationId String
+  redeemedById   String
+  redeemedAt     DateTime     @default(now())
+  promoCode      PromoCode    @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  redeemedBy     User         @relation(fields: [redeemedById], references: [id], onDelete: Cascade)
+
+  @@unique([promoCodeId, organizationId])
+  @@index([organizationId])
+}
+
+model Invitation {
+  id             String         @id @default(cuid())
+  organizationId String
+  email          String
+  role           MembershipRole @default(MEMBER)
+  token          String         @unique @default(cuid())
+  invitedById    String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User           @relation("InvitationsSent", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, email])
+  @@index([email])
 }
 
 model Membership {

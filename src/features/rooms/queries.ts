@@ -4,7 +4,7 @@ import {
   deriveRoomStatus,
   type DerivedRoomStatus,
 } from "@/lib/room-status";
-import { getOrgSettings } from "@/lib/session";
+import { getOrgSettings, getSessionOrganizationId } from "@/lib/session";
 
 export type RoomWithStatus = {
   id: string;
@@ -16,11 +16,9 @@ export type RoomWithStatus = {
   status: DerivedRoomStatus;
 };
 
+/** @deprecated Use getSessionOrganizationId — never pick an arbitrary org. */
 export async function getDefaultOrganizationId() {
-  const org = await prisma.organization.findFirst({
-    orderBy: { createdAt: "asc" },
-  });
-  return org?.id ?? null;
+  return getSessionOrganizationId();
 }
 
 export async function loadRoomsWithStatus(organizationId: string, now = new Date()) {
@@ -121,6 +119,18 @@ export async function getRoomBySlug(slug: string) {
         },
         orderBy: { startAt: "asc" },
       },
+    },
+  });
+}
+
+export async function getOrganizationPlan(organizationId: string) {
+  return prisma.organization.findUniqueOrThrow({
+    where: { id: organizationId },
+    select: {
+      id: true,
+      name: true,
+      planTier: true,
+      _count: { select: { rooms: true } },
     },
   });
 }

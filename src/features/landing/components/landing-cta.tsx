@@ -17,7 +17,8 @@ export function LandingCta({
             Ready when the room is
           </h2>
           <p className="mt-2 max-w-md text-muted-foreground">
-            Start with live status, then book the next open slot.
+            Create a workspace free for 2 rooms, invite your team, and book the
+            next open slot.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">

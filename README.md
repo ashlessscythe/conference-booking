@@ -46,9 +46,22 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Magic links print to the **dev server console** when `AUTH_RESEND_KEY` is empty.
 
+### SaaS plans
+
+- **Free** — up to 2 rooms per organization (default on signup at `/signup`)
+- **Pro** — higher room limit via Stripe Checkout (`Admin → Billing`)
+- Set `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, and `STRIPE_WEBHOOK_SECRET` to monetize
+- Orgs are isolated: rooms, bookings, devices, and members stay inside one workspace
+- Admins invite teammates from **Admin → Users** (invite email / console link)
+
+- Set `PLATFORM_OWNER_EMAILS` to your operator email(s)
+- Create codes at **Admin → Promo codes**; orgs redeem on **Admin → Billing**
+- Free-month codes grant Pro without Stripe; discount codes sync to Stripe Checkout
+
 ### Useful URLs
 
 - Landing: `/`
+- Sign up: `/signup`
 - Rooms dashboard: `/rooms`
 - Room (QR): `/rooms/orion`
 - Book: `/rooms/orion/book`
@@ -64,6 +77,7 @@ Opening a display URL sets a short-lived `kiosk_device` cookie so that browser i
 | `npm run dev` | Dev server |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run test` | Vitest unit tests (billing/promo money paths) |
 | `npm run build` | Production build |
 | `npm run db:migrate` | Prisma migrate |
 | `npm run db:seed` | Seed demo data |

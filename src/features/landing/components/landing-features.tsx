@@ -1,4 +1,5 @@
-import { CalendarClock, MonitorSmartphone, QrCode, Search } from "lucide-react";
+import { CalendarClock, CreditCard, MonitorSmartphone, QrCode, Search, Users } from "lucide-react";
+import { FREE_ROOM_LIMIT } from "@/lib/billing/plans";
 
 const features = [
   {
@@ -24,6 +25,17 @@ const features = [
     title: "Tablet displays",
     description:
       "Door-side kiosks show status and today’s agenda so hallways stay clear.",
+  },
+  {
+    icon: Users,
+    title: "Your team, your org",
+    description:
+      "Invite coworkers to your workspace. Each organization keeps its own rooms and bookings.",
+  },
+  {
+    icon: CreditCard,
+    title: "Free to start",
+    description: `Up to ${FREE_ROOM_LIMIT} rooms free. Upgrade to Pro when you need the whole floor — just add your Stripe keys.`,
   },
 ] as const;
 

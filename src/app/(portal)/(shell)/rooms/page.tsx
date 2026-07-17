@@ -1,10 +1,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import {
-  getDashboardSnapshot,
-  getDefaultOrganizationId,
-} from "@/features/rooms/queries";
+import { getDashboardSnapshot } from "@/features/rooms/queries";
+import { getSessionOrganizationId } from "@/lib/session";
 import { getSampleDashboardSnapshot } from "@/features/rooms/sample-data";
 import { StatusBadge } from "@/features/rooms/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  FREE_ROOM_LIMIT,
+  planLabel,
+  roomLimitForPlan,
+} from "@/lib/billing/plans";
+import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -31,22 +36,28 @@ export default async function RoomsPage({
 
   let snap = getSampleDashboardSnapshot();
   let preview = !signedIn;
+  let planNotice: string | null = null;
 
   if (signedIn) {
-    const orgId = await getDefaultOrganizationId();
+    const orgId = await getSessionOrganizationId();
     if (!orgId) {
-      return (
-        <div className="space-y-4">
-          <h1 className="text-3xl font-semibold">Conference Booking</h1>
-          <p className="text-muted-foreground">
-            No organization seeded yet. Run{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5">npm run db:seed</code>.
-          </p>
-        </div>
-      );
+      redirect("/onboarding");
     }
     snap = await getDashboardSnapshot(orgId);
     preview = false;
+
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { planTier: true, _count: { select: { rooms: true } } },
+    });
+    if (org) {
+      const limit = roomLimitForPlan(org.planTier);
+      if (org.planTier === "FREE") {
+        planNotice = `Free plan: ${org._count.rooms} of ${FREE_ROOM_LIMIT} rooms used. Upgrade to Pro for more rooms.`;
+      } else if (org._count.rooms >= limit) {
+        planNotice = `${planLabel(org.planTier)} plan room limit reached (${org._count.rooms}/${limit}).`;
+      }
+    }
   }
 
   const capacity = params.capacity ? Number(params.capacity) : null;
@@ -64,7 +75,9 @@ export default async function RoomsPage({
 
   const firstFree = snap.freeNow[0];
   const bookHref = (slug: string) =>
-    preview ? `/login?callbackUrl=${encodeURIComponent(`/rooms`)}` : `/rooms/${slug}/book`;
+    preview
+      ? `/login?callbackUrl=${encodeURIComponent(`/rooms`)}`
+      : `/rooms/${slug}/book`;
 
   return (
     <div className="space-y-10">
@@ -79,6 +92,20 @@ export default async function RoomsPage({
                 ? "Sample office schedule — sign in to see and book your real rooms."
                 : "See what's free, what's happening now, and book in a few taps."}
             </p>
+            {planNotice && (
+              <p className="mt-3 max-w-xl text-sm text-amber-800 dark:text-amber-200">
+                {planNotice}{" "}
+                {(session?.user?.role === "ADMIN" ||
+                  session?.user?.role === "OWNER") && (
+                  <Link
+                    href="/admin/billing"
+                    className="underline underline-offset-4"
+                  >
+                    Upgrade
+                  </Link>
+                )}
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             {firstFree && (
@@ -90,10 +117,20 @@ export default async function RoomsPage({
                 {preview ? "Sign in to book" : "Book available room"}
               </LinkButton>
             )}
-            <LinkButton href="/rooms?capacity=8" size="lg" variant="outline" className="h-12">
+            <LinkButton
+              href="/rooms?capacity=8"
+              size="lg"
+              variant="outline"
+              className="h-12"
+            >
               Find 8+ seats
             </LinkButton>
-            <LinkButton href="/rooms#schedule" size="lg" variant="outline" className="h-12">
+            <LinkButton
+              href="/rooms#schedule"
+              size="lg"
+              variant="outline"
+              className="h-12"
+            >
               View floor schedule
             </LinkButton>
           </div>
@@ -195,10 +232,15 @@ export default async function RoomsPage({
                   <p>
                     <span className="font-medium">Next:</span>{" "}
                     {room.status.next.title} at{" "}
-                    <LocalTime value={room.status.next.startAt} pattern="h:mm a" />
+                    <LocalTime
+                      value={room.status.next.startAt}
+                      pattern="h:mm a"
+                    />
                   </p>
                 ) : (
-                  <p className="text-muted-foreground">Open for the rest of today</p>
+                  <p className="text-muted-foreground">
+                    Open for the rest of today
+                  </p>
                 )}
                 <LinkButton
                   href={bookHref(room.slug)}

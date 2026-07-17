@@ -19,6 +19,20 @@ npm run dev
 
 If Docker is unavailable, set `DATABASE_URL` in `.env` to any reachable Postgres database, then run migrate + seed.
 
+## Stripe (optional)
+
+To sell Pro upgrades, set in `.env`:
+
+```
+STRIPE_SECRET_KEY=sk_...
+STRIPE_PRICE_ID=price_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+Point Stripe webhooks at `/api/stripe/webhook`. Without these, every new org stays on the free 2-room plan.
+
+Set `PLATFORM_OWNER_EMAILS` (comma-separated) to unlock **Admin → Promo codes**.
+
 ## Magic links (local)
 
 Leave `AUTH_RESEND_KEY` empty. Request a sign-in, then copy the magic link from the `npm run dev` console.

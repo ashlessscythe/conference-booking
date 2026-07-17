@@ -50,17 +50,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, trigger, session }) {
       if (user?.id) {
         token.sub = user.id;
-        const enrich = await enrichTokenFromDb(user.id);
-        token.role = enrich.role;
-        token.organizationId = enrich.organizationId;
-      } else if (token.sub && !token.organizationId) {
-        const enrich = await enrichTokenFromDb(token.sub);
-        token.role = enrich.role;
-        token.organizationId = enrich.organizationId;
       }
       if (trigger === "update" && session) {
         token.role = session.role ?? token.role;
         token.organizationId = session.organizationId ?? token.organizationId;
+      } else if (token.sub) {
+        // Always refresh membership from DB so signup/invites apply without re-login.
+        const enrich = await enrichTokenFromDb(token.sub);
+        token.role = enrich.role;
+        token.organizationId = enrich.organizationId;
       }
       return token;
     },

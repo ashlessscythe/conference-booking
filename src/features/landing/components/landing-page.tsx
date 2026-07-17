@@ -1,10 +1,9 @@
 import { auth } from "@/lib/auth";
-import {
-  getDashboardSnapshot,
-  getDefaultOrganizationId,
-} from "@/features/rooms/queries";
+import { getDashboardSnapshot } from "@/features/rooms/queries";
+import { getSessionOrganizationId } from "@/lib/session";
 import { LandingHero } from "@/features/landing/components/landing-hero";
 import { LandingFeatures } from "@/features/landing/components/landing-features";
+import { LandingPricing } from "@/features/landing/components/landing-pricing";
 import { LandingCta } from "@/features/landing/components/landing-cta";
 
 export async function LandingPage() {
@@ -13,23 +12,27 @@ export async function LandingPage() {
 
   let bookHref = "/rooms";
   if (signedIn) {
-    const orgId = await getDefaultOrganizationId();
+    const orgId = await getSessionOrganizationId();
     if (orgId) {
       const snap = await getDashboardSnapshot(orgId);
       const firstFree = snap.freeNow[0];
       if (firstFree) {
         bookHref = `/rooms/${firstFree.slug}/book`;
       }
+    } else {
+      bookHref = "/onboarding";
     }
   }
 
   const primary = signedIn
-    ? { href: bookHref, label: "Book a room" }
-    : { href: "/login", label: "Sign in" };
+    ? session?.user?.organizationId
+      ? { href: bookHref, label: "Book a room" }
+      : { href: "/onboarding", label: "Finish setup" }
+    : { href: "/signup", label: "Start free" };
 
   const secondary = signedIn
     ? { href: "/rooms", label: "View rooms" }
-    : { href: "/rooms", label: "Browse rooms" };
+    : { href: "/login", label: "Sign in" };
 
   return (
     <div className="flex flex-col">
@@ -39,6 +42,7 @@ export async function LandingPage() {
         signedIn={signedIn}
       />
       <LandingFeatures />
+      <LandingPricing signupHref="/signup" signedIn={signedIn} />
       <LandingCta primary={primary} secondary={secondary} />
     </div>
   );
