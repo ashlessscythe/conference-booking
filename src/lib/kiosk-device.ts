@@ -16,7 +16,8 @@ export function parseDisplayDeviceToken(pathname: string): string | null {
   const match = pathname.match(/^\/display\/([^/]+)$/);
   if (!match) return null;
   const token = match[1];
-  if (!token || token.includes("..")) return null;
+  // Reserved under /display/* (not device tokens).
+  if (!token || token === "exit" || token.includes("..")) return null;
   try {
     return decodeURIComponent(token);
   } catch {
@@ -27,6 +28,7 @@ export function parseDisplayDeviceToken(pathname: string): string | null {
 export function isKioskAllowedPath(pathname: string): boolean {
   return (
     pathname === "/display" ||
+    pathname === "/display/exit" ||
     pathname.startsWith("/display/") ||
     pathname.startsWith("/api/kiosk/")
   );

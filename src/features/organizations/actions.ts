@@ -15,6 +15,7 @@ import {
   clearSignupIntent,
   getSignupIntent,
 } from "@/lib/signup-intent";
+import { unstable_update } from "@/lib/auth";
 
 const orgSchema = z.object({
   name: z.string().min(1).max(80),
@@ -75,6 +76,14 @@ async function sendInviteEmail(input: {
     "",
     "This link expires in 14 days.",
   ].join("\n");
+  const html = `
+    <div style="font-family: system-ui, sans-serif; line-height: 1.5; color: #111;">
+      <p>You've been invited to <strong>${escapeHtml(input.organizationName)}</strong> as <strong>${escapeHtml(input.role)}</strong>.</p>
+      <p><a href="${escapeHtml(input.inviteUrl)}" style="display:inline-block;padding:10px 16px;background:#0f766e;color:#fff;text-decoration:none;border-radius:8px;">Accept invite</a></p>
+      <p style="color:#555;font-size:14px;">Or open this link:<br /><a href="${escapeHtml(input.inviteUrl)}">${escapeHtml(input.inviteUrl)}</a></p>
+      <p style="color:#777;font-size:13px;">This link expires in 14 days.</p>
+    </div>
+  `.trim();
 
   if (!key) {
     console.log("\n========== ORG INVITE ==========");
@@ -86,12 +95,32 @@ async function sendInviteEmail(input: {
 
   const { Resend } = await import("resend");
   const resend = new Resend(key);
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from,
     to: input.email,
     subject,
     text,
+    html,
   });
+  if (error) {
+    console.error("Invite email failed:", error);
+    console.log("\n========== ORG INVITE (fallback) ==========");
+    console.log(`To: ${input.email}`);
+    console.log(`URL: ${input.inviteUrl}`);
+    console.log("===========================================\n");
+    throw new Error(
+      error.message || "Failed to send invite email. Check Resend / EMAIL_FROM.",
+    );
+  }
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 /** Invite by email (pending until accepted) or refresh an existing invite. */
@@ -234,8 +263,15 @@ export async function completeOnboarding(raw: unknown) {
     throw new Error("Organization name is required.");
   }
 
-  await createOrganizationForOwner({ userId: user.id, name });
+  const org = await createOrganizationForOwner({ userId: user.id, name });
   await clearSignupIntent();
+  // Persist role/org on the JWT so edge middleware can authorize /admin.
+  await unstable_update({
+    user: {
+      role: "OWNER",
+      organizationId: org.id,
+    },
+  });
   revalidatePath("/rooms");
   revalidatePath("/admin");
   redirect("/admin/rooms");

@@ -9,6 +9,7 @@ import {
   createPromoCodeRecord,
   redeemPromoCodeForOrganization,
 } from "@/lib/billing/promo-service";
+import { isPromoRedeemError } from "@/lib/billing/errors";
 import { prisma } from "@/lib/db";
 
 function assertPlatformOwner(email: string | null | undefined) {
@@ -82,6 +83,15 @@ export async function redeemPromoCode(raw: unknown) {
 }
 
 export async function redeemPromoCodeForm(formData: FormData) {
-  await redeemPromoCode({ code: formData.get("code") });
+  try {
+    await redeemPromoCode({ code: formData.get("code") });
+  } catch (e) {
+    if (isPromoRedeemError(e)) {
+      redirect(
+        `/admin/billing?promoError=${encodeURIComponent(e.message)}`,
+      );
+    }
+    throw e;
+  }
   redirect("/admin/billing?promo=1");
 }

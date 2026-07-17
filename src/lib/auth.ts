@@ -24,7 +24,7 @@ async function enrichTokenFromDb(userId: string) {
   };
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -52,8 +52,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.sub = user.id;
       }
       if (trigger === "update" && session) {
-        token.role = session.role ?? token.role;
-        token.organizationId = session.organizationId ?? token.organizationId;
+        const role = session.role ?? session.user?.role;
+        const organizationId =
+          session.organizationId ?? session.user?.organizationId;
+        if (role !== undefined) token.role = role;
+        if (organizationId !== undefined) {
+          token.organizationId = organizationId;
+        }
       } else if (token.sub) {
         // Always refresh membership from DB so signup/invites apply without re-login.
         const enrich = await enrichTokenFromDb(token.sub);

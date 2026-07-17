@@ -73,10 +73,23 @@ export default async function AdminRoomsPage() {
       <div>
         <h2 className="text-3xl font-semibold tracking-tight">Rooms</h2>
         <p className="text-muted-foreground">
-          Capacity, floors, and out-of-service toggles.{" "}
-          <span className="font-medium text-foreground">
-            {planLabel(effective)} plan · {rooms.length}/{limit} rooms
-          </span>
+          Capacity, floors, and out-of-service toggles.
+          {effective === "FREE" ? (
+            <>
+              {" "}
+              <span className="font-medium text-foreground">
+                {planLabel(effective)} plan · {rooms.length}/{limit} rooms
+              </span>
+            </>
+          ) : (
+            <>
+              {" "}
+              <span className="font-medium text-foreground">
+                {planLabel(effective)} plan
+              </span>
+              {rooms.length > 0 ? ` · ${rooms.length} rooms` : null}
+            </>
+          )}
         </p>
       </div>
 

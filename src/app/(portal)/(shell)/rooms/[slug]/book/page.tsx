@@ -3,11 +3,8 @@ import { auth } from "@/lib/auth";
 import { getRoomBySlug, getRoomDaySchedule } from "@/features/rooms/queries";
 import { isSampleRoomSlug } from "@/features/rooms/sample-data";
 import { BookingForm } from "@/features/bookings/components/booking-form";
-import {
-  clearBookingIntent,
-  getBookingIntent,
-} from "@/lib/booking-intent";
-import { createBooking } from "@/features/bookings/actions";
+import { getBookingIntent } from "@/lib/booking-intent";
+import { resolveEffectivePlan } from "@/lib/billing/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -32,25 +29,14 @@ export default async function BookRoomPage({
   const schedule = await getRoomDaySchedule(room.id);
   const intent = await getBookingIntent();
 
-  // Resume preserved booking after magic link
+  // Resume preserved booking after magic link (cookie writes need a Route Handler).
   if (
     session?.user &&
     intent?.roomSlug === room.slug &&
     intent.startAt &&
     intent.endAt
   ) {
-    try {
-      await createBooking({
-        roomId: room.id,
-        title: intent.title || q.title || "Meeting",
-        startAt: new Date(intent.startAt),
-        endAt: new Date(intent.endAt),
-      });
-      await clearBookingIntent();
-      redirect("/bookings");
-    } catch {
-      await clearBookingIntent();
-    }
+    redirect(`/rooms/${slug}/book/resume`);
   }
 
   return (
@@ -62,7 +48,7 @@ export default async function BookRoomPage({
         <p className="mt-1 text-muted-foreground">
           Pick a free slot on the timeline. No long forms.
         </p>
-        {room.organization.planTier === "FREE" && (
+        {resolveEffectivePlan(room.organization) === "FREE" && (
           <p className="mt-3 text-sm text-amber-800 dark:text-amber-200">
             This workspace is on the free plan (up to 2 rooms). Admins can
             upgrade to Pro when they need more rooms.

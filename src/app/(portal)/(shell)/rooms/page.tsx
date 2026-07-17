@@ -19,6 +19,7 @@ import {
 import {
   FREE_ROOM_LIMIT,
   planLabel,
+  resolveEffectivePlan,
   roomLimitForPlan,
 } from "@/lib/billing/plans";
 import { prisma } from "@/lib/db";
@@ -48,14 +49,20 @@ export default async function RoomsPage({
 
     const org = await prisma.organization.findUnique({
       where: { id: orgId },
-      select: { planTier: true, _count: { select: { rooms: true } } },
+      select: {
+        planTier: true,
+        stripeSubscriptionStatus: true,
+        promoExpiresAt: true,
+        _count: { select: { rooms: true } },
+      },
     });
     if (org) {
-      const limit = roomLimitForPlan(org.planTier);
-      if (org.planTier === "FREE") {
+      const effective = resolveEffectivePlan(org);
+      const limit = roomLimitForPlan(effective);
+      if (effective === "FREE") {
         planNotice = `Free plan: ${org._count.rooms} of ${FREE_ROOM_LIMIT} rooms used. Upgrade to Pro for more rooms.`;
       } else if (org._count.rooms >= limit) {
-        planNotice = `${planLabel(org.planTier)} plan room limit reached (${org._count.rooms}/${limit}).`;
+        planNotice = `${planLabel(effective)} plan room limit reached (${org._count.rooms}/${limit}).`;
       }
     }
   }
@@ -95,15 +102,16 @@ export default async function RoomsPage({
             {planNotice && (
               <p className="mt-3 max-w-xl text-sm text-amber-800 dark:text-amber-200">
                 {planNotice}{" "}
-                {(session?.user?.role === "ADMIN" ||
-                  session?.user?.role === "OWNER") && (
-                  <Link
-                    href="/admin/billing"
-                    className="underline underline-offset-4"
-                  >
-                    Upgrade
-                  </Link>
-                )}
+                {planNotice.startsWith("Free plan") &&
+                  (session?.user?.role === "ADMIN" ||
+                    session?.user?.role === "OWNER") && (
+                    <Link
+                      href="/admin/billing"
+                      className="underline underline-offset-4"
+                    >
+                      Upgrade
+                    </Link>
+                  )}
               </p>
             )}
           </div>

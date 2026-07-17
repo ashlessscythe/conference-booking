@@ -16,3 +16,20 @@ export function isRoomLimitError(error: unknown): error is RoomLimitError {
       "name" in error &&
       (error as { name: string }).name === "RoomLimitError");
 }
+
+export class PromoRedeemError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PromoRedeemError";
+  }
+}
+
+export function isPromoRedeemError(error: unknown): error is PromoRedeemError {
+  return (
+    error instanceof PromoRedeemError ||
+    (typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      (error as { name: string }).name === "PromoRedeemError")
+  );
+}

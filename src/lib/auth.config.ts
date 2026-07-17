@@ -45,15 +45,29 @@ export const authConfig = {
 
       const lockedToken = request.cookies.get(KIOSK_DEVICE_COOKIE)?.value;
       if (lockedToken && !isKioskAllowedPath(path)) {
-        const url = request.nextUrl.clone();
-        url.pathname = `/display/${encodeURIComponent(lockedToken)}`;
-        url.search = "";
-        return NextResponse.redirect(url);
+        // Admins managing the app in the same browser must not be trapped
+        // (e.g. after clicking a Display URL on /admin/devices).
+        const role = auth?.user?.role;
+        if (role !== "ADMIN" && role !== "OWNER") {
+          const url = request.nextUrl.clone();
+          url.pathname = `/display/${encodeURIComponent(lockedToken)}`;
+          url.search = "";
+          return NextResponse.redirect(url);
+        }
       }
 
       if (path.startsWith("/admin")) {
-        const role = auth?.user?.role;
-        return role === "ADMIN" || role === "OWNER";
+        if (!auth?.user) return false;
+        const role = auth.user.role;
+        if (role === "ADMIN" || role === "OWNER") return true;
+        // Signed in but no workspace yet — finish setup instead of looping on login.
+        if (!auth.user.organizationId) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/onboarding";
+          url.search = "";
+          return NextResponse.redirect(url);
+        }
+        return false;
       }
       if (
         path.startsWith("/bookings") ||
@@ -78,8 +92,13 @@ export const authConfig = {
         token.sub = user.id;
       }
       if (trigger === "update" && session) {
-        token.role = session.role;
-        token.organizationId = session.organizationId;
+        const role = session.role ?? session.user?.role;
+        const organizationId =
+          session.organizationId ?? session.user?.organizationId;
+        if (role !== undefined) token.role = role;
+        if (organizationId !== undefined) {
+          token.organizationId = organizationId;
+        }
       }
       return token;
     },

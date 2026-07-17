@@ -10,6 +10,7 @@ import {
   type CreatePromoInput,
   type PromoCodeRecord,
 } from "@/lib/billing/promo";
+import { PromoRedeemError } from "@/lib/billing/errors";
 
 function toPromoRecord(row: {
   id: string;
@@ -171,7 +172,7 @@ export async function redeemPromoCodeForOrganization(input: {
   });
 
   if (!result.ok) {
-    throw new Error(result.message);
+    throw new PromoRedeemError(result.message);
   }
 
   await prisma.$transaction(async (tx) => {
@@ -183,7 +184,9 @@ export async function redeemPromoCodeForOrganization(input: {
       locked.maxRedemptions != null &&
       locked.redemptionCount >= locked.maxRedemptions
     ) {
-      throw new Error("This promo code has reached its redemption limit.");
+      throw new PromoRedeemError(
+        "This promo code has reached its redemption limit.",
+      );
     }
 
     await tx.promoRedemption.create({

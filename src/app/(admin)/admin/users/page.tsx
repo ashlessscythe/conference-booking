@@ -81,6 +81,14 @@ export default async function AdminUsersPage() {
                     })}
                   </CardDescription>
                 </CardHeader>
+                <CardContent>
+                  <a
+                    href={`/invite/${inv.token}`}
+                    className="break-all text-sm text-sky-600 underline underline-offset-4 dark:text-sky-400"
+                  >
+                    /invite/{inv.token}
+                  </a>
+                </CardContent>
               </Card>
             ))}
           </div>

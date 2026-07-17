@@ -32,9 +32,10 @@ export default async function OnboardingPage() {
 
   const intent = await getSignupIntent();
 
-  // Cookie already has org name from signup — finish automatically.
+  // Cookie already has org name from signup — finish via route handler
+  // (cookie deletes are not allowed during RSC render).
   if (intent?.organizationName) {
-    await completeOnboarding({ name: intent.organizationName });
+    redirect("/onboarding/complete");
   }
 
   return (

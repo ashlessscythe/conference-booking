@@ -51,6 +51,37 @@ export async function syncOrganizationFromSubscription(
   });
 }
 
+/**
+ * Pull the latest subscription for an org's Stripe customer.
+ * Used when webhooks may not reach localhost after Checkout success.
+ */
+export async function syncOrganizationFromStripeCustomer(
+  organizationId: string,
+) {
+  if (!process.env.STRIPE_SECRET_KEY) return null;
+
+  const org = await prisma.organization.findUniqueOrThrow({
+    where: { id: organizationId },
+    select: { stripeCustomerId: true },
+  });
+  if (!org.stripeCustomerId) return null;
+
+  const stripe = getStripe();
+  const subs = await stripe.subscriptions.list({
+    customer: org.stripeCustomerId,
+    status: "all",
+    limit: 10,
+  });
+
+  const preferred =
+    subs.data.find((s) => isActiveSubscriptionStatus(s.status)) ??
+    subs.data[0];
+  if (!preferred) return null;
+
+  await syncOrganizationFromSubscription(organizationId, preferred);
+  return preferred;
+}
+
 export async function findOrgIdFromStripeEvent(input: {
   organizationId?: string | null;
   customerId?: string | null;

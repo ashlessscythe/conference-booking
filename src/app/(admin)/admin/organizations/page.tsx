@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
-import { planLabel, roomLimitForPlan } from "@/lib/billing/plans";
+import {
+  planLabel,
+  resolveEffectivePlan,
+  roomLimitForPlan,
+} from "@/lib/billing/plans";
 import {
   Card,
   CardContent,
@@ -42,13 +46,13 @@ export default async function OrganizationsPage() {
           <CardHeader>
             <CardTitle>{active.organization.name}</CardTitle>
             <CardDescription>
-              Active · {planLabel(active.organization.planTier)} · /
+              Active · {planLabel(resolveEffectivePlan(active.organization))} · /
               {active.organization.slug}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
             {active.organization._count.rooms} /{" "}
-            {roomLimitForPlan(active.organization.planTier)} rooms ·{" "}
+            {roomLimitForPlan(resolveEffectivePlan(active.organization))} rooms ·{" "}
             {active.organization._count.members} people · your role:{" "}
             {active.role}
           </CardContent>
@@ -61,17 +65,20 @@ export default async function OrganizationsPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {memberships
               .filter((m) => m.organizationId !== admin.organizationId)
-              .map((m) => (
-                <Card key={m.id}>
-                  <CardHeader>
-                    <CardTitle>{m.organization.name}</CardTitle>
-                    <CardDescription>
-                      {planLabel(m.organization.planTier)} · {m.role} ·{" "}
-                      {m.organization._count.rooms} rooms
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
+              .map((m) => {
+                const effective = resolveEffectivePlan(m.organization);
+                return (
+                  <Card key={m.id}>
+                    <CardHeader>
+                      <CardTitle>{m.organization.name}</CardTitle>
+                      <CardDescription>
+                        {planLabel(effective)} · {m.role} ·{" "}
+                        {m.organization._count.rooms} rooms
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                );
+              })}
           </div>
         </div>
       )}

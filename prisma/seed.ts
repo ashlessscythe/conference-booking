@@ -41,8 +41,8 @@ async function main() {
 
   const org = await prisma.organization.create({
     data: {
-      name: "Aptiv HQ",
-      slug: "aptiv-hq",
+      name: "Company HQ",
+      slug: "company-hq",
       // Demo seed has 3 rooms — mark Pro so free-limit checks do not block demos
       planTier: "PRO",
       settings: {
@@ -138,11 +138,23 @@ async function main() {
     },
   });
 
+  await prisma.promoCode.create({
+    data: {
+      code: "DEMO3MO",
+      kind: "FREE_MONTHS",
+      freeMonths: 3,
+      active: true,
+      note: "Seed demo — 3 months of Pro",
+      createdByUserId: admin.id,
+    },
+  });
+
   console.log("Seed complete.");
   console.log("Admin: admin@example.com");
   console.log("Member: member@example.com");
   console.log("Kiosk: /display/demo-orion-kiosk");
   console.log("Rooms: /rooms/orion, /rooms/nova, /rooms/helios");
+  console.log("Promo: DEMO3MO (3 months Pro)");
 }
 
 main()
