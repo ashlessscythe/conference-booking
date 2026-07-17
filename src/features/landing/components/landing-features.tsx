@@ -1,5 +1,5 @@
 import { CalendarClock, CreditCard, MonitorSmartphone, QrCode, Search, Users } from "lucide-react";
-import { FREE_ROOM_LIMIT } from "@/lib/billing/plans";
+import { FREE_ROOM_LIMIT, FREE_USER_LIMIT } from "@/lib/billing/plans";
 
 const features = [
   {
@@ -29,13 +29,12 @@ const features = [
   {
     icon: Users,
     title: "Your team, your org",
-    description:
-      "Invite coworkers to your workspace. Each organization keeps its own rooms and bookings.",
+    description: `Invite coworkers to your workspace (up to ${FREE_USER_LIMIT} on Free). Each organization keeps its own rooms and bookings.`,
   },
   {
     icon: CreditCard,
     title: "Free to start",
-    description: `Up to ${FREE_ROOM_LIMIT} rooms free. Upgrade to Pro when you need the whole floor.`,
+    description: `Up to ${FREE_ROOM_LIMIT} rooms and ${FREE_USER_LIMIT} users free. Upgrade to Pro for unlimited seats, 15-minute scheduling, and custom meeting lengths.`,
   },
 ] as const;
 

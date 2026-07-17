@@ -1,4 +1,5 @@
 import { LoginForm } from "@/features/auth/components/login-form";
+import { FREE_ROOM_LIMIT } from "@/lib/billing/plans";
 
 export default async function LoginPage({
   searchParams,
@@ -41,7 +42,7 @@ export default async function LoginPage({
         <p className="mx-auto max-w-md text-center text-sm text-muted-foreground">
           New here?{" "}
           <a href="/signup" className="underline underline-offset-4">
-            Start free with 2 rooms
+            Start free with {FREE_ROOM_LIMIT} rooms
           </a>
         </p>
       </div>

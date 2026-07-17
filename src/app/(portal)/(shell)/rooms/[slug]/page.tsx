@@ -16,6 +16,7 @@ import { StatusBadge } from "@/features/rooms/components/status-badge";
 import { DayTimeline } from "@/features/bookings/components/day-timeline";
 import { LinkButton } from "@/components/link-button";
 import { LocalTime } from "@/components/local-time";
+import { resolveEffectivePlan } from "@/lib/billing/plans";
 import {
   Card,
   CardContent,
@@ -82,6 +83,7 @@ export default async function RoomPage({
       }))}
       bookHref={`/rooms/${room.slug}/book`}
       bookLabel="Book room"
+      planTier={resolveEffectivePlan(room.organization)}
     />
   );
 }
@@ -130,6 +132,7 @@ function RoomDetail({
   schedule,
   bookHref,
   bookLabel,
+  planTier,
 }: {
   name: string;
   capacity: number;
@@ -146,6 +149,7 @@ function RoomDetail({
   }[];
   bookHref: string;
   bookLabel: string;
+  planTier?: "FREE" | "PRO";
 }) {
   return (
     <div className="space-y-8">
@@ -208,7 +212,7 @@ function RoomDetail({
           <CardDescription>Visual blocks — red means booked.</CardDescription>
         </CardHeader>
         <CardContent>
-          <DayTimeline bookings={schedule} />
+          <DayTimeline bookings={schedule} planTier={planTier} />
         </CardContent>
       </Card>
     </div>

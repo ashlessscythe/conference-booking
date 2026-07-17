@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FREE_ROOM_LIMIT } from "@/lib/billing/plans";
+import { FREE_ROOM_LIMIT, FREE_USER_LIMIT } from "@/lib/billing/plans";
 
 export function SignupForm() {
   const [pending, startTransition] = useTransition();
@@ -26,7 +26,7 @@ export function SignupForm() {
         <CardDescription>
           {submitted
             ? "Click the magic link we sent to create your workspace."
-            : `Create your organization — up to ${FREE_ROOM_LIMIT} rooms free. Upgrade anytime for more.`}
+            : `Create your organization — up to ${FREE_ROOM_LIMIT} rooms and ${FREE_USER_LIMIT} users free. Upgrade anytime for unlimited seats and custom meeting lengths.`}
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -8,6 +8,8 @@ import { DayTimeline } from "@/features/bookings/components/day-timeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { PlanTierLike } from "@/lib/billing/plans";
+import { allowsCustomMeetingLength } from "@/lib/billing/plans";
 
 type ScheduleItem = {
   id: string;
@@ -23,12 +25,14 @@ export function BookingForm({
   schedule,
   authed,
   defaultTitle = "",
+  planTier = "FREE",
 }: {
   roomId: string;
   roomSlug: string;
   schedule: ScheduleItem[];
   authed: boolean;
   defaultTitle?: string;
+  planTier?: PlanTierLike;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -84,6 +88,13 @@ export function BookingForm({
     });
   }
 
+  const selectedLabel =
+    startAt && endAt
+      ? `${format(startAt, "h:mm a")} – ${format(endAt, "h:mm a")}`
+      : allowsCustomMeetingLength(planTier)
+        ? "Click the timeline, then resize"
+        : "Click the timeline";
+
   return (
     <div className="space-y-6">
       <DayTimeline
@@ -91,6 +102,7 @@ export function BookingForm({
         onSlotClick={onSlot}
         selectedStart={startAt}
         selectedEnd={endAt}
+        planTier={planTier}
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -106,9 +118,7 @@ export function BookingForm({
         <div className="space-y-2">
           <Label>Selected time</Label>
           <div className="flex h-12 items-center rounded-lg border px-3 text-base">
-            {startAt && endAt
-              ? `${format(startAt, "h:mm a")} – ${format(endAt, "h:mm a")}`
-              : "Click the timeline"}
+            {selectedLabel}
           </div>
         </div>
       </div>

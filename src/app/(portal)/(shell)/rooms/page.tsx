@@ -60,7 +60,7 @@ export default async function RoomsPage({
       const effective = resolveEffectivePlan(org);
       const limit = roomLimitForPlan(effective);
       if (effective === "FREE") {
-        planNotice = `Free plan: ${org._count.rooms} of ${FREE_ROOM_LIMIT} rooms used. Upgrade to Pro for more rooms.`;
+        planNotice = `Free plan: ${org._count.rooms} of ${FREE_ROOM_LIMIT} rooms used. Upgrade to Pro for unlimited rooms, seats, and custom meeting lengths.`;
       } else if (org._count.rooms >= limit) {
         planNotice = `${planLabel(effective)} plan room limit reached (${org._count.rooms}/${limit}).`;
       }

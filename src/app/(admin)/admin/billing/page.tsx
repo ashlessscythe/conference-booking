@@ -7,6 +7,7 @@ import {
 import { redeemPromoCodeForm } from "@/features/billing/promo-actions";
 import {
   FREE_ROOM_LIMIT,
+  FREE_USER_LIMIT,
   isActiveSubscriptionStatus,
   planLabel,
   resolveEffectivePlan,
@@ -94,14 +95,14 @@ export default async function AdminBillingPage({
               : promoActive && org.promoExpiresAt
                 ? `${org.name} is on Pro via promo through ${org.promoExpiresAt.toLocaleDateString()}.`
                 : `${org.name} is on Pro with the full room limit.`
-            : `Manage the plan for ${org.name}. Free includes ${FREE_ROOM_LIMIT} rooms; Pro unlocks more. Redeem a promo for free months or checkout discounts.`}
+            : `Manage the plan for ${org.name}. Free includes ${FREE_ROOM_LIMIT} rooms, ${FREE_USER_LIMIT} users, and fixed 30-minute meetings. Pro unlocks unlimited rooms and seats, 15-minute scheduling, and custom meeting lengths. Redeem a promo for free months or checkout discounts.`}
         </p>
       </div>
 
       {q.success && (
         <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100">
           {isPro
-            ? "You're on Pro. Free-plan room limits no longer apply."
+            ? "You're on Pro. Free-plan room, seat, and duration limits no longer apply."
             : "Checkout completed. If Pro is not showing yet, wait a moment and refresh — or confirm the Stripe webhook is reaching this app."}
         </p>
       )}

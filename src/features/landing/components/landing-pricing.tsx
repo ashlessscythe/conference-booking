@@ -1,5 +1,8 @@
 import { LinkButton } from "@/components/link-button";
-import { FREE_ROOM_LIMIT } from "@/lib/billing/plans";
+import {
+  FREE_ROOM_LIMIT,
+  FREE_USER_LIMIT,
+} from "@/lib/billing/plans";
 
 export function LandingPricing({
   signupHref,
@@ -24,12 +27,13 @@ export function LandingPricing({
               Free
             </p>
             <p className="mt-2 text-3xl font-semibold tracking-tight">
-              {FREE_ROOM_LIMIT} rooms
+              {FREE_ROOM_LIMIT} rooms · {FREE_USER_LIMIT} users
             </p>
-            <p className="mt-3 text-muted-foreground">
-              Magic-link sign-in, live availability, QR pages, and tablet
-              displays for a small office.
-            </p>
+            <ul className="mt-3 space-y-2 text-muted-foreground">
+              <li>Magic-link sign-in, live availability, QR pages, and tablet displays</li>
+              <li>Fixed 30-minute meetings</li>
+              <li>Up to {FREE_ROOM_LIMIT} rooms and {FREE_USER_LIMIT} users per workspace</li>
+            </ul>
             {!signedIn && (
               <LinkButton href={signupHref} className="mt-6 h-11">
                 Start free
@@ -41,12 +45,14 @@ export function LandingPricing({
               Pro
             </p>
             <p className="mt-2 text-3xl font-semibold tracking-tight">
-              Unlimited rooms
+              Unlimited rooms &amp; users
             </p>
-            <p className="mt-3 text-muted-foreground">
-              Unlock more rooms when you outgrow free. Upgrade anytime from
-              Admin → Billing.
-            </p>
+            <ul className="mt-3 space-y-2 text-muted-foreground">
+              <li>Unlimited rooms and team seats</li>
+              <li>15-minute scheduling granularity</li>
+              <li>Custom meeting lengths with resize on the timeline</li>
+              <li>Upgrade anytime from Admin → Billing</li>
+            </ul>
             {!signedIn && (
               <LinkButton
                 href={signupHref}

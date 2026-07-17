@@ -69,8 +69,8 @@ The seed also creates:
 
 ## SaaS plans
 
-- **Free** — up to 2 rooms per organization (default on signup at `/signup`)
-- **Pro** — up to the practical 500-room safety cap via Stripe Checkout or a free-month promo
+- **Free** — up to 4 rooms and 2 users per organization; fixed 30-minute meetings (default on signup at `/signup`)
+- **Pro** — unlimited rooms and users (practical safety caps), 15-minute scheduling, and custom meeting lengths via Stripe Checkout or a free-month promo
 - Orgs are isolated: rooms, bookings, devices, and members stay inside one workspace
 - Owners and admins invite teammates from **Admin → Users**
 - Plan checks are enforced on the server, not only hidden in the UI

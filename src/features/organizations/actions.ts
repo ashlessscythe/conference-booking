@@ -16,11 +16,16 @@ import {
   getSignupIntent,
 } from "@/lib/signup-intent";
 import { unstable_update } from "@/lib/auth";
+import {
+  canAddSeat,
+  resolveEffectivePlan,
+  userLimitForPlan,
+} from "@/lib/billing/plans";
+import { SeatLimitError } from "@/lib/billing/errors";
 
 const orgSchema = z.object({
   name: z.string().min(1).max(80),
 });
-
 export async function createOrganization(raw: unknown) {
   const admin = await requireAdmin();
   const data = orgSchema.parse(raw);
@@ -135,7 +140,12 @@ export async function inviteOrAddMember(raw: unknown) {
 
   const org = await prisma.organization.findUniqueOrThrow({
     where: { id: admin.organizationId },
-    select: { name: true },
+    select: {
+      name: true,
+      planTier: true,
+      stripeSubscriptionStatus: true,
+      promoExpiresAt: true,
+    },
   });
 
   const existingUser = await prisma.user.findUnique({
@@ -161,32 +171,78 @@ export async function inviteOrAddMember(raw: unknown) {
     }
   }
 
-  const expiresAt = new Date();
+  const now = new Date();
+  const expiresAt = new Date(now);
   expiresAt.setDate(expiresAt.getDate() + 14);
 
-  const invite = await prisma.invitation.upsert({
-    where: {
-      organizationId_email: {
+  // Refreshing an existing pending invite does not consume another seat.
+  // Creating a new invite (or resurrecting an accepted/expired one) does.
+  const invite = await prisma.$transaction(async (tx) => {
+    const existingInvite = await tx.invitation.findUnique({
+      where: {
+        organizationId_email: {
+          organizationId: admin.organizationId,
+          email,
+        },
+      },
+    });
+
+    const refreshingPending =
+      !!existingInvite &&
+      existingInvite.acceptedAt === null &&
+      existingInvite.expiresAt.getTime() > now.getTime();
+
+    if (!refreshingPending) {
+      const [memberCount, pendingInviteCount] = await Promise.all([
+        tx.membership.count({
+          where: { organizationId: admin.organizationId },
+        }),
+        tx.invitation.count({
+          where: {
+            organizationId: admin.organizationId,
+            acceptedAt: null,
+            expiresAt: { gt: now },
+          },
+        }),
+      ]);
+      const currentSeatCount = memberCount + pendingInviteCount;
+      const effective = resolveEffectivePlan(org, now);
+      if (!canAddSeat({ planTier: effective, currentSeatCount })) {
+        const limit = userLimitForPlan(effective);
+        throw new SeatLimitError(
+          effective === "FREE"
+            ? `Free plan includes ${limit} users (members + pending invites). Upgrade to Pro for unlimited seats.`
+            : `User limit of ${limit} reached for this organization.`,
+          limit,
+          effective,
+        );
+      }
+    }
+
+    return tx.invitation.upsert({
+      where: {
+        organizationId_email: {
+          organizationId: admin.organizationId,
+          email,
+        },
+      },
+      create: {
         organizationId: admin.organizationId,
         email,
+        role: data.role,
+        invitedById: admin.id,
+        expiresAt,
+        acceptedAt: null,
+        token: crypto.randomUUID().replace(/-/g, ""),
       },
-    },
-    create: {
-      organizationId: admin.organizationId,
-      email,
-      role: data.role,
-      invitedById: admin.id,
-      expiresAt,
-      acceptedAt: null,
-      token: crypto.randomUUID().replace(/-/g, ""),
-    },
-    update: {
-      role: data.role,
-      invitedById: admin.id,
-      expiresAt,
-      acceptedAt: null,
-      token: crypto.randomUUID().replace(/-/g, ""),
-    },
+      update: {
+        role: data.role,
+        invitedById: admin.id,
+        expiresAt,
+        acceptedAt: null,
+        token: crypto.randomUUID().replace(/-/g, ""),
+      },
+    });
   });
 
   const inviteUrl = `${appUrl()}/invite/${invite.token}`;
@@ -200,7 +256,6 @@ export async function inviteOrAddMember(raw: unknown) {
   revalidatePath("/admin/users");
   return { status: "invited" as const, inviteUrl };
 }
-
 export async function acceptInvitation(token: string) {
   const user = await requireUser();
   const invite = await prisma.invitation.findUnique({

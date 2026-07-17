@@ -1,5 +1,5 @@
 import { SignupForm } from "@/features/auth/components/signup-form";
-import { FREE_ROOM_LIMIT } from "@/lib/billing/plans";
+import { FREE_ROOM_LIMIT, FREE_USER_LIMIT } from "@/lib/billing/plans";
 
 export default function SignupPage() {
   return (
@@ -10,8 +10,9 @@ export default function SignupPage() {
             Conference Booking
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Spin up a workspace in minutes. Free for {FREE_ROOM_LIMIT} rooms —
-            Pro when you need the whole floor.
+            Spin up a workspace in minutes. Free for {FREE_ROOM_LIMIT} rooms
+            and {FREE_USER_LIMIT} users — Pro for unlimited seats, 15-minute
+            scheduling, and custom meeting lengths.
           </p>
         </div>
         <SignupForm />

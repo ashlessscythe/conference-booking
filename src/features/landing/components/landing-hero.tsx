@@ -1,4 +1,5 @@
 import { LinkButton } from "@/components/link-button";
+import { FREE_ROOM_LIMIT, FREE_USER_LIMIT } from "@/lib/billing/plans";
 
 type Cta = { href: string; label: string };
 
@@ -32,7 +33,7 @@ export function LandingHero({
         <p className="animate-fade-up-delay-2 mt-5 max-w-lg text-base text-muted-foreground sm:text-lg">
           {signedIn
             ? "See what's free now, book in a few taps, and keep the floor moving."
-            : "Live availability, fast booking, and room displays. Start free with 2 rooms — upgrade when your office grows."}
+            : `Live availability, fast booking, and room displays. Start free with ${FREE_ROOM_LIMIT} rooms and ${FREE_USER_LIMIT} users — upgrade when your office grows.`}
         </p>
         <div className="animate-fade-up-delay-2 mt-9 flex flex-wrap gap-3">
           <LinkButton href={primary.href} size="lg" className="h-12 px-6">

@@ -4,7 +4,11 @@ import { getRoomBySlug, getRoomDaySchedule } from "@/features/rooms/queries";
 import { isSampleRoomSlug } from "@/features/rooms/sample-data";
 import { BookingForm } from "@/features/bookings/components/booking-form";
 import { getBookingIntent } from "@/lib/booking-intent";
-import { resolveEffectivePlan } from "@/lib/billing/plans";
+import {
+  FREE_ROOM_LIMIT,
+  FREE_USER_LIMIT,
+  resolveEffectivePlan,
+} from "@/lib/billing/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -50,8 +54,10 @@ export default async function BookRoomPage({
         </p>
         {resolveEffectivePlan(room.organization) === "FREE" && (
           <p className="mt-3 text-sm text-amber-800 dark:text-amber-200">
-            This workspace is on the free plan (up to 2 rooms). Admins can
-            upgrade to Pro when they need more rooms.
+            This workspace is on the free plan (up to {FREE_ROOM_LIMIT} rooms,{" "}
+            {FREE_USER_LIMIT} users, fixed 30-minute meetings). Admins can
+            upgrade to Pro for unlimited rooms and users, 15-minute scheduling,
+            and custom meeting lengths.
           </p>
         )}
       </div>
@@ -61,6 +67,7 @@ export default async function BookRoomPage({
         schedule={schedule}
         authed={!!session?.user}
         defaultTitle={intent?.title || q.title}
+        planTier={resolveEffectivePlan(room.organization)}
       />
     </div>
   );

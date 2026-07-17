@@ -1,4 +1,5 @@
 import { LinkButton } from "@/components/link-button";
+import { FREE_ROOM_LIMIT, FREE_USER_LIMIT } from "@/lib/billing/plans";
 
 type Cta = { href: string; label: string };
 
@@ -17,8 +18,9 @@ export function LandingCta({
             Ready when the room is
           </h2>
           <p className="mt-2 max-w-md text-muted-foreground">
-            Create a workspace free for 2 rooms, invite your team, and book the
-            next open slot.
+            Create a workspace free for {FREE_ROOM_LIMIT} rooms and{" "}
+            {FREE_USER_LIMIT} users, invite your team, and book the next open
+            slot.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">

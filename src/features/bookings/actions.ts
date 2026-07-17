@@ -8,6 +8,10 @@ import {
   updateBookingSchema,
 } from "@/features/bookings/validation";
 import { clearBookingIntent } from "@/lib/booking-intent";
+import {
+  assertBookingFitsPlan,
+  resolveEffectivePlan,
+} from "@/lib/billing/plans";
 
 async function assertNoOverlap(input: {
   roomId: string;
@@ -37,6 +41,18 @@ async function assertNoOverlap(input: {
   }
 }
 
+async function loadOrgPlanForRoom(organizationId: string) {
+  const org = await prisma.organization.findUniqueOrThrow({
+    where: { id: organizationId },
+    select: {
+      planTier: true,
+      stripeSubscriptionStatus: true,
+      promoExpiresAt: true,
+    },
+  });
+  return resolveEffectivePlan(org);
+}
+
 export async function createBooking(raw: unknown) {
   const user = await requireUser();
   const data = createBookingSchema.parse(raw);
@@ -59,6 +75,13 @@ export async function createBooking(raw: unknown) {
   if (!membership) {
     throw new Error("You must join this organization before booking.");
   }
+
+  const planTier = await loadOrgPlanForRoom(room.organizationId);
+  assertBookingFitsPlan({
+    planTier,
+    startAt: data.startAt,
+    endAt: data.endAt,
+  });
 
   const settings = await getOrgSettings(room.organizationId);
   await assertNoOverlap({
@@ -101,6 +124,13 @@ export async function updateBooking(raw: unknown) {
   if (existing.status === "CANCELLED") {
     throw new Error("Cannot edit a cancelled booking.");
   }
+
+  const planTier = await loadOrgPlanForRoom(existing.room.organizationId);
+  assertBookingFitsPlan({
+    planTier,
+    startAt: data.startAt,
+    endAt: data.endAt,
+  });
 
   const settings = await getOrgSettings(existing.room.organizationId);
   await assertNoOverlap({

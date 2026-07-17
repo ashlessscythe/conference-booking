@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FREE_ROOM_LIMIT } from "@/lib/billing/plans";
+import { FREE_ROOM_LIMIT, FREE_USER_LIMIT } from "@/lib/billing/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +45,8 @@ export default async function OnboardingPage() {
           <CardTitle>Name your workspace</CardTitle>
           <CardDescription>
             You&apos;re signed in as {user.email}. Create an organization to
-            manage up to {FREE_ROOM_LIMIT} rooms on the free plan.
+            manage up to {FREE_ROOM_LIMIT} rooms and {FREE_USER_LIMIT} users on
+            the free plan.
           </CardDescription>
         </CardHeader>
         <CardContent>

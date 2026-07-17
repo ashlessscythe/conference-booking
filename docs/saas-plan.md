@@ -4,10 +4,12 @@ Sell Conference Booking as multi-tenant SaaS. Organizations own rooms, members, 
 
 ## Product rules
 
-| Plan | Rooms | How unlocked |
-|------|-------|----------------|
-| Free | Up to **2** | Default on signup |
-| Pro | Unlimited (practical cap) | Stripe subscription |
+| Plan | Rooms | Users | Booking |
+|------|-------|-------|---------|
+| Free | Up to **4** | Up to **2** (members + pending invites) | Fixed **30**-minute meetings |
+| Pro | Unlimited (practical cap) | Unlimited (practical cap) | **15**-minute grid, custom lengths |
+
+How unlocked: Free is default on signup; Pro via Stripe subscription or an unexpired promo.
 
 ## PR split
 
