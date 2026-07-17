@@ -31,18 +31,46 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
     Resend({
       apiKey: process.env.AUTH_RESEND_KEY,
       from: process.env.EMAIL_FROM ?? "Conference Booking <onboarding@resend.dev>",
-      // In development without a key, Auth.js still creates the verification token;
-      // the magic link is printed by NextAuth / visible in the VerificationToken table.
-      ...(process.env.AUTH_RESEND_KEY
-        ? {}
-        : {
-            sendVerificationRequest: async ({ identifier, url }) => {
-              console.log("\n========== MAGIC LINK ==========");
-              console.log(`To: ${identifier}`);
-              console.log(`URL: ${url}`);
-              console.log("================================\n");
-            },
+      // Always own the send path so Resend API failures become actionable logs
+      // instead of opaque production 500 digests.
+      sendVerificationRequest: async ({ identifier, url, provider }) => {
+        if (!provider.apiKey) {
+          console.log("\n========== MAGIC LINK ==========");
+          console.log(`To: ${identifier}`);
+          console.log(`URL: ${url}`);
+          console.log("================================\n");
+          return;
+        }
+
+        const { host } = new URL(url);
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${provider.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: provider.from,
+            to: identifier,
+            subject: `Sign in to ${host}`,
+            html: `<p>Sign in to <strong>${host}</strong></p><p><a href="${url}">Click here to sign in</a></p><p>Or copy: ${url}</p>`,
+            text: `Sign in to ${host}\n${url}\n`,
           }),
+        });
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          console.error("Resend magic link failed:", {
+            status: res.status,
+            body,
+            to: identifier,
+            from: provider.from,
+          });
+          throw new Error(
+            `Resend error: ${JSON.stringify(body)}`,
+          );
+        }
+      },
     }),
   ],
   callbacks: {

@@ -41,8 +41,12 @@ export function SignupForm() {
           <form
             action={(fd) => {
               startTransition(async () => {
-                setSubmitted(true);
-                await requestSignupMagicLink(fd);
+                try {
+                  await requestSignupMagicLink(fd);
+                  setSubmitted(true);
+                } catch {
+                  // Server redirects on success/failure; keep form on unexpected client errors.
+                }
               });
             }}
             className="space-y-4"

@@ -46,8 +46,12 @@ export function LoginForm({
           <form
             action={(fd) => {
               startTransition(async () => {
-                setSubmitted(true);
-                await requestMagicLink(fd);
+                try {
+                  await requestMagicLink(fd);
+                  setSubmitted(true);
+                } catch {
+                  // Server redirects on success/failure; keep form on unexpected client errors.
+                }
               });
             }}
             className="space-y-4"
