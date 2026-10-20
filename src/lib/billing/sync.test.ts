@@ -162,7 +162,7 @@ describe("currentPeriodEndFromSubscription", () => {
       object: "subscription",
       items: {
         object: "list",
-        data: [],
+        data: [] as Stripe.SubscriptionItem[],
         has_more: false,
         url: "/v1/subscription_items",
       },
